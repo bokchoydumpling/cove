@@ -20,7 +20,7 @@ export default function MapPage() {
 
   return (
     <AppShell>
-      <div className="relative h-screen flex flex-col">
+      <div className="relative h-screen overflow-hidden">
         {/* Top bar */}
         <div className="absolute top-4 left-4 right-4 z-20 flex items-center gap-3">
           <MapFilters />
@@ -29,8 +29,8 @@ export default function MapPage() {
           </div>
         </div>
 
-        {/* Map fills the viewport */}
-        <div className="flex-1">
+        {/* Map fills the full h-screen parent */}
+        <div className="absolute inset-0">
           <CoveMap users={users} filterFn={filterFn} />
         </div>
       </div>
