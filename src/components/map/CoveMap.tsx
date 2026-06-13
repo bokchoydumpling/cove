@@ -9,11 +9,45 @@ interface Props {
   filterFn?: (user: User) => boolean;
 }
 
+// ─── Mapbox (tiles only) ─────────────────────────────────────────────────────
+
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
 const TOKEN_IS_PLACEHOLDER =
   !MAPBOX_TOKEN ||
   MAPBOX_TOKEN === "your_mapbox_token_here" ||
   MAPBOX_TOKEN.startsWith("your_");
+
+// Zoom and center chosen to show all 30 seed users (SF + Oakland).
+const MAP_ZOOM = 11;
+const MAP_CENTER: [number, number] = [-122.33, 37.77];
+
+// ─── Mercator SVG projection ─────────────────────────────────────────────────
+// Uses the same zoom / center as Mapbox so SVG circles sit in the right area.
+
+const WORLD = 512 * Math.pow(2, MAP_ZOOM); // world size in pixels at this zoom
+
+function mercX(lng: number) {
+  return ((lng + 180) / 360) * WORLD;
+}
+function mercY(lat: number) {
+  const s = Math.sin((lat * Math.PI) / 180);
+  return (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * WORLD;
+}
+
+// Virtual SVG canvas — large enough to contain all seed users with margin.
+const VW = 1200;
+const VH = 800;
+const CX = mercX(MAP_CENTER[0]);
+const CY = mercY(MAP_CENTER[1]);
+
+function toSVG(lng: number, lat: number) {
+  return {
+    x: +(mercX(lng) - CX + VW / 2).toFixed(1),
+    y: +(mercY(lat) - CY + VH / 2).toFixed(1),
+  };
+}
+
+// ─── Avatar colour helpers ───────────────────────────────────────────────────
 
 const AVATAR_HEX: Record<string, string> = {
   "bg-[#E8734A]": "#E8734A",
@@ -25,274 +59,176 @@ const AVATAR_HEX: Record<string, string> = {
   "bg-[#D4A5A5]": "#D4A5A5",
   "bg-[#B5C4D1]": "#B5C4D1",
 };
-function getAvatarHex(name: string): string {
+function hex(name: string) {
   return AVATAR_HEX[getAvatarColor(name)] ?? "#E8734A";
 }
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export default function CoveMap({ users, filterFn }: Props) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<unknown>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const [mapReadyVersion, setMapReadyVersion] = useState(0);
-  const mapboxReady = mapReadyVersion > 0;
+  const [mapboxReady, setMapboxReady] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  // Pixel positions for every user, keyed by id. Updated on map move/zoom.
-  const [markerPixels, setMarkerPixels] = useState<Record<string, { x: number; y: number }>>({});
 
   const visibleUsers = filterFn ? users.filter(filterFn) : users;
 
-  // Initialise Mapbox in the background.
+  // Load Mapbox tiles in the background — tiles only, no marker API.
   useEffect(() => {
     if (TOKEN_IS_PLACEHOLDER) return;
+    let alive = true;
 
-    let isMounted = true;
-
-    const initMap = async () => {
+    (async () => {
       try {
         const mapboxgl = (await import("mapbox-gl")).default;
-        if (!isMounted || !mapContainer.current) return;
+        if (!alive || !mapContainer.current) return;
 
         (mapboxgl as unknown as { accessToken: string }).accessToken = MAPBOX_TOKEN;
 
-        const map = new (
-          mapboxgl as unknown as { Map: new (o: unknown) => unknown }
-        ).Map({
+        const map = new (mapboxgl as unknown as { Map: new (o: unknown) => unknown }).Map({
           container: mapContainer.current,
           style: "mapbox://styles/mapbox/light-v11",
-          center: [-122.4194, 37.7749],
-          zoom: 12,
+          center: MAP_CENTER,
+          zoom: MAP_ZOOM,
           attributionControl: false,
         });
 
         mapRef.current = map;
 
         (map as { on: (e: string, cb: () => void) => void }).on("load", () => {
-          if (!isMounted) return;
-          if (timeoutRef.current) clearTimeout(timeoutRef.current);
-          setMapReadyVersion((v) => v + 1);
+          if (!alive) return;
+          clearTimeout(timeoutRef.current!);
+          setMapboxReady(true);
         });
 
-        (map as { on: (e: string, cb: (e?: unknown) => void) => void }).on(
-          "error",
-          (e) => {
-            console.warn("[Cove] Mapbox error — staying on fallback map:", e);
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
-          }
-        );
+        (map as { on: (e: string, cb: (e?: unknown) => void) => void }).on("error", () => {
+          clearTimeout(timeoutRef.current!);
+        });
 
         timeoutRef.current = setTimeout(() => {
-          if (!isMounted) return;
-          console.warn("[Cove] Mapbox load timed out — staying on fallback map");
+          if (alive) console.warn("[Cove] Mapbox timed out");
         }, 8000);
-      } catch (err) {
-        console.warn("[Cove] Mapbox failed to initialise:", err);
+      } catch {
+        // stay on fallback background
       }
-    };
-
-    initMap();
+    })();
 
     return () => {
-      isMounted = false;
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      alive = false;
+      clearTimeout(timeoutRef.current!);
       if (mapRef.current) (mapRef.current as { remove: () => void }).remove();
     };
   }, []);
 
-  // Project every user's lat/lng to canvas pixels.
-  // Runs once on map load, then re-runs on every map move so markers track the
-  // viewport. We project ALL users (not just visible) so that filter toggles
-  // instantly show/hide markers without waiting for a re-projection.
-  useEffect(() => {
-    if (mapReadyVersion === 0 || !mapRef.current) return;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const map = mapRef.current as any;
-
-    const project = () => {
-      const pixels: Record<string, { x: number; y: number }> = {};
-      users.forEach((user) => {
-        const pt = map.project([user.coordinates.lng, user.coordinates.lat]);
-        pixels[user.id] = { x: Math.round(pt.x), y: Math.round(pt.y) };
-      });
-      setMarkerPixels(pixels);
-    };
-
-    project();
-    map.on("move", project);
-
-    return () => {
-      map.off("move", project);
-    };
-  }, [mapReadyVersion, users]);
-
   return (
     <div className="relative w-full h-full">
-      {/* Fallback — visible until Mapbox is ready */}
-      <div className={cn("absolute inset-0 transition-opacity duration-500", mapboxReady ? "opacity-0 pointer-events-none" : "opacity-100")}>
-        <MapFallback
-          users={visibleUsers}
-          selectedUser={selectedUser}
-          onSelectUser={setSelectedUser}
-        />
+
+      {/* ── Layer 1: background ─────────────────────────────────────────── */}
+      {/* Fallback illustration shown until Mapbox tiles are ready */}
+      <div className={cn(
+        "absolute inset-0 transition-opacity duration-500",
+        mapboxReady ? "opacity-0 pointer-events-none" : "opacity-100",
+      )}>
+        <MapBackground />
       </div>
 
-      {/* Mapbox canvas + React marker overlay */}
+      {/* Mapbox tile canvas */}
       {!TOKEN_IS_PLACEHOLDER && (
-        <div className={cn("absolute inset-0 transition-opacity duration-500", mapboxReady ? "opacity-100" : "opacity-0 pointer-events-none")}>
+        <div className={cn(
+          "absolute inset-0 transition-opacity duration-500",
+          mapboxReady ? "opacity-100" : "opacity-0 pointer-events-none",
+        )}>
           <div ref={mapContainer} className="w-full h-full" />
+        </div>
+      )}
 
-          {/* Avatar circles positioned by projected lat/lng */}
-          {mapboxReady && (
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                overflow: "hidden",
-                pointerEvents: "none",
-              }}
+      {/* ── Layer 2: SVG markers — always mounted, zero state dependencies ── */}
+      {/*
+        Mercator-projected SVG pinned over the entire map area.
+        preserveAspectRatio="xMidYMid slice" fills the container and keeps
+        the geographic centre aligned with the Mapbox centre.
+        pointerEvents on the <svg> is none so pan/zoom still reach Mapbox;
+        each <g> re-enables it so clicks register on the circles.
+      */}
+      <svg
+        viewBox={`0 0 ${VW} ${VH}`}
+        preserveAspectRatio="xMidYMid slice"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          pointerEvents: "none",
+          zIndex: 10,
+          overflow: "visible",
+        }}
+      >
+        {visibleUsers.map((user) => {
+          const { x, y } = toSVG(user.coordinates.lng, user.coordinates.lat);
+          const fill = hex(user.name);
+          const selected = selectedUser?.id === user.id;
+
+          return (
+            <g
+              key={user.id}
+              transform={`translate(${x},${y})`}
+              onClick={() => setSelectedUser((p) => (p?.id === user.id ? null : user))}
+              style={{ cursor: "pointer", pointerEvents: "auto" }}
             >
-              {visibleUsers.map((user) => {
-                const pos = markerPixels[user.id];
-                if (!pos) return null;
-                const isSelected = selectedUser?.id === user.id;
-                const hex = getAvatarHex(user.name);
-                return (
-                  <button
-                    key={user.id}
-                    onClick={() =>
-                      setSelectedUser((prev) =>
-                        prev?.id === user.id ? null : user
-                      )
-                    }
-                    title={`${user.name} · ${user.profession}`}
-                    style={{
-                      position: "absolute",
-                      left: pos.x,
-                      top: pos.y,
-                      transform: "translate(-50%, -50%)",
-                      width: 40,
-                      height: 40,
-                      borderRadius: "50%",
-                      background: hex,
-                      border: isSelected
-                        ? "2.5px solid #E8734A"
-                        : "2.5px solid white",
-                      boxShadow: isSelected
-                        ? "0 0 0 3px rgba(232,115,74,0.35), 0 4px 16px rgba(0,0,0,0.2)"
-                        : "0 2px 10px rgba(0,0,0,0.18)",
-                      color: "white",
-                      fontSize: 12,
-                      fontWeight: 700,
-                      fontFamily:
-                        "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
-                      cursor: "pointer",
-                      pointerEvents: "auto",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      zIndex: isSelected ? 20 : 10,
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isSelected)
-                        (e.currentTarget as HTMLButtonElement).style.transform =
-                          "translate(-50%, -50%) scale(1.15)";
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isSelected)
-                        (e.currentTarget as HTMLButtonElement).style.transform =
-                          "translate(-50%, -50%)";
-                    }}
-                  >
-                    {getInitials(user.name)}
-                    {user.availability === "Open to Meet" && (
-                      <span
-                        style={{
-                          position: "absolute",
-                          bottom: -1,
-                          right: -1,
-                          width: 12,
-                          height: 12,
-                          background: "#7B9E87",
-                          borderRadius: "50%",
-                          border: "2px solid white",
-                          pointerEvents: "none",
-                        }}
-                      />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+              {/* subtle drop shadow */}
+              <circle r={21} fill="rgba(0,0,0,0.12)" transform="translate(1,2)" />
 
-          {/* DEBUG PANEL — remove once markers work */}
-          <div style={{ position: "absolute", top: 80, left: 8, background: "rgba(0,0,0,0.75)", color: "white", fontSize: 11, padding: "6px 10px", borderRadius: 6, zIndex: 9999, pointerEvents: "none", lineHeight: 1.6 }}>
-            <div>mapReadyVersion: {mapReadyVersion}</div>
-            <div>mapboxReady: {String(mapboxReady)}</div>
-            <div>markerPixels count: {Object.keys(markerPixels).length}</div>
-            <div>visibleUsers: {visibleUsers.length}</div>
-            {Object.keys(markerPixels).length > 0 && (
-              <div>first pixel: {JSON.stringify(markerPixels[visibleUsers[0]?.id])}</div>
-            )}
-          </div>
-
-          {/* DEBUG: one hardcoded circle at pixel (300,300) — if visible, abs positioning inside overlay works */}
-          <div style={{ position: "absolute", left: 300, top: 300, width: 40, height: 40, borderRadius: "50%", background: "blue", zIndex: 9999, border: "3px solid white" }} />
-
-          {mapboxReady && selectedUser && (
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
-              <ProfileCard
-                user={selectedUser}
-                onClose={() => setSelectedUser(null)}
+              {/* avatar circle */}
+              <circle
+                r={20}
+                fill={fill}
+                stroke={selected ? "#E8734A" : "white"}
+                strokeWidth={selected ? 3 : 2.5}
               />
-            </div>
-          )}
+
+              {/* selection ring */}
+              {selected && (
+                <circle r={26} fill="none" stroke="rgba(232,115,74,0.4)" strokeWidth={4} />
+              )}
+
+              {/* initials */}
+              <text
+                textAnchor="middle"
+                dominantBaseline="central"
+                fill="white"
+                fontSize={12}
+                fontWeight="700"
+                fontFamily="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+                style={{ pointerEvents: "none", userSelect: "none" }}
+              >
+                {getInitials(user.name)}
+              </text>
+
+              {/* "Open to Meet" green dot */}
+              {user.availability === "Open to Meet" && (
+                <circle r={5} cx={14} cy={14} fill="#7B9E87" stroke="white" strokeWidth={2} />
+              )}
+            </g>
+          );
+        })}
+      </svg>
+
+      {/* ── Layer 3: profile card popup ─────────────────────────────────── */}
+      {selectedUser && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
+          <ProfileCard user={selectedUser} onClose={() => setSelectedUser(null)} />
         </div>
       )}
     </div>
   );
 }
 
-// ─── Fallback map (illustration + CSS-positioned markers) ────────────────────
+// ─── Fallback background (no user circles — SVG layer handles those) ──────────
 
-const MARKER_POSITIONS = [
-  { x: "18%", y: "62%" }, { x: "34%", y: "36%" }, { x: "22%", y: "47%" },
-  { x: "75%", y: "22%" }, { x: "48%", y: "41%" }, { x: "60%", y: "54%" },
-  { x: "27%", y: "63%" }, { x: "82%", y: "58%" }, { x: "24%", y: "44%" },
-  { x: "73%", y: "39%" }, { x: "16%", y: "22%" }, { x: "66%", y: "32%" },
-  { x: "50%", y: "60%" }, { x: "85%", y: "36%" }, { x: "38%", y: "53%" },
-  { x: "44%", y: "27%" }, { x: "55%", y: "29%" }, { x: "25%", y: "53%" },
-  { x: "62%", y: "66%" }, { x: "78%", y: "46%" }, { x: "46%", y: "48%" },
-  { x: "52%", y: "43%" }, { x: "70%", y: "56%" }, { x: "35%", y: "27%" },
-  { x: "20%", y: "68%" }, { x: "88%", y: "26%" }, { x: "82%", y: "18%" },
-  { x: "40%", y: "21%" }, { x: "58%", y: "70%" }, { x: "30%", y: "75%" },
-];
-
-function MapFallback({
-  users,
-  selectedUser,
-  onSelectUser,
-}: {
-  users: User[];
-  selectedUser: User | null;
-  onSelectUser: (u: User | null) => void;
-}) {
-  const [popupPos, setPopupPos] = useState<{ x: string; y: string } | null>(null);
-
-  const handleSelect = (user: User, x: string, y: string) => {
-    if (selectedUser?.id === user.id) {
-      onSelectUser(null);
-      setPopupPos(null);
-    } else {
-      onSelectUser(user);
-      setPopupPos({ x, y });
-    }
-  };
-
+function MapBackground() {
   return (
-    <div className="relative w-full h-full bg-gradient-to-br from-[#E8F4F8] via-[#EEF2E6] to-[#F5EDDF]">
-      {/* Faint street grid */}
+    <div className="w-full h-full bg-gradient-to-br from-[#E8F4F8] via-[#EEF2E6] to-[#F5EDDF]">
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none"
         xmlns="http://www.w3.org/2000/svg"
@@ -305,22 +241,18 @@ function MapFallback({
         <rect width="100%" height="100%" fill="url(#cove-grid)" />
         <line x1="0" y1="35%" x2="100%" y2="33%" stroke="#B8C8B0" strokeWidth="2" opacity="0.5" />
         <line x1="0" y1="55%" x2="100%" y2="57%" stroke="#B8C8B0" strokeWidth="1.5" opacity="0.4" />
-        <line x1="0" y1="72%" x2="100%" y2="70%" stroke="#B8C8B0" strokeWidth="1" opacity="0.3" />
         <line x1="20%" y1="0" x2="22%" y2="100%" stroke="#B8C8B0" strokeWidth="2" opacity="0.5" />
         <line x1="45%" y1="0" x2="43%" y2="100%" stroke="#B8C8B0" strokeWidth="1.5" opacity="0.4" />
         <line x1="70%" y1="0" x2="72%" y2="100%" stroke="#B8C8B0" strokeWidth="2" opacity="0.5" />
-        <rect x="24%" y="38%" width="17%" height="14%" rx="4" fill="#C8DCBA" opacity="0.35" />
       </svg>
 
-      {/* Neighbourhood labels */}
       {[
-        { label: "Mission",      x: "20%", y: "65%" },
-        { label: "SoMa",         x: "45%", y: "44%" },
-        { label: "Castro",       x: "22%", y: "50%" },
+        { label: "Mission", x: "20%", y: "65%" },
+        { label: "SoMa", x: "45%", y: "44%" },
         { label: "Hayes Valley", x: "33%", y: "39%" },
-        { label: "Marina",       x: "15%", y: "17%" },
-        { label: "Temescal",     x: "72%", y: "19%" },
-        { label: "Fruitvale",    x: "80%", y: "62%" },
+        { label: "Marina", x: "15%", y: "17%" },
+        { label: "Temescal", x: "72%", y: "19%" },
+        { label: "Fruitvale", x: "80%", y: "62%" },
         { label: "Lake Merritt", x: "67%", y: "37%" },
       ].map(({ label, x, y }) => (
         <span
@@ -332,119 +264,10 @@ function MapFallback({
         </span>
       ))}
 
-      {/* User markers */}
-      {users.map((user, i) => {
-        const pos = MARKER_POSITIONS[i % MARKER_POSITIONS.length];
-        const isSelected = selectedUser?.id === user.id;
-        const hex = getAvatarHex(user.name);
-        return (
-          <button
-            key={user.id}
-            onClick={() => handleSelect(user, pos.x, pos.y)}
-            title={`${user.name} · ${user.profession}`}
-            style={{
-              position: "absolute",
-              left: pos.x,
-              top: pos.y,
-              transform: "translate(-50%,-50%)",
-              width: 40,
-              height: 40,
-              borderRadius: "50%",
-              background: hex,
-              border: isSelected ? "2.5px solid #E8734A" : "2.5px solid white",
-              boxShadow: isSelected
-                ? "0 0 0 3px rgba(232,115,74,0.35), 0 4px 16px rgba(0,0,0,0.2)"
-                : "0 2px 10px rgba(0,0,0,0.18)",
-              color: "white",
-              fontSize: 12,
-              fontWeight: 700,
-              fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
-              cursor: "pointer",
-              zIndex: isSelected ? 20 : 10,
-              transition: "transform 0.15s, box-shadow 0.15s",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-            onMouseEnter={(e) => {
-              if (!isSelected) (e.currentTarget as HTMLButtonElement).style.transform = "translate(-50%,-50%) scale(1.15)";
-            }}
-            onMouseLeave={(e) => {
-              if (!isSelected) (e.currentTarget as HTMLButtonElement).style.transform = "translate(-50%,-50%)";
-            }}
-          >
-            {getInitials(user.name)}
-            {user.availability === "Open to Meet" && (
-              <span
-                style={{
-                  position: "absolute",
-                  bottom: -1,
-                  right: -1,
-                  width: 12,
-                  height: 12,
-                  background: "#7B9E87",
-                  borderRadius: "50%",
-                  border: "2px solid white",
-                  pointerEvents: "none",
-                }}
-              />
-            )}
-          </button>
-        );
-      })}
-
-      {/* Profile card popup */}
-      {selectedUser && popupPos && (
-        <FallbackPopup
-          user={selectedUser}
-          anchorX={popupPos.x}
-          anchorY={popupPos.y}
-          onClose={() => { onSelectUser(null); setPopupPos(null); }}
-        />
-      )}
-
-      {/* Map legend */}
-      <div className="absolute bottom-4 left-4 flex items-center gap-2">
-        <div className="bg-white/85 backdrop-blur-sm rounded-xl px-3 py-2 text-xs text-[#737373] shadow-sm border border-white/60">
-          📍 San Francisco + Oakland &nbsp;·&nbsp;
-          <span className="font-semibold text-[#1A1A1A]">{users.length}</span> people nearby
-        </div>
-        <div className="bg-white/85 backdrop-blur-sm rounded-xl px-3 py-2 text-xs text-[#737373] shadow-sm border border-white/60 flex items-center gap-1.5">
-          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#7B9E87", display: "inline-block" }} />
-          Open to Meet
-        </div>
+      <div className="absolute bottom-4 left-4 bg-white/85 backdrop-blur-sm rounded-xl px-3 py-2 text-xs text-[#737373] shadow-sm border border-white/60 flex items-center gap-1.5">
+        <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#7B9E87", display: "inline-block" }} />
+        Open to Meet
       </div>
-    </div>
-  );
-}
-
-function FallbackPopup({
-  user,
-  anchorX,
-  anchorY,
-  onClose,
-}: {
-  user: User;
-  anchorX: string;
-  anchorY: string;
-  onClose: () => void;
-}) {
-  const yPct = parseFloat(anchorY);
-  const showAbove = yPct > 45;
-
-  return (
-    <div
-      style={{
-        position: "absolute",
-        left: anchorX,
-        top: anchorY,
-        transform: showAbove
-          ? "translate(-50%, calc(-100% - 24px))"
-          : "translate(-50%, 24px)",
-        zIndex: 30,
-      }}
-    >
-      <ProfileCard user={user} onClose={onClose} />
     </div>
   );
 }

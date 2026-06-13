@@ -34,10 +34,6 @@ export default function MapPage() {
           <CoveMap users={users} filterFn={filterFn} />
         </div>
 
-        {/* DEBUG: hardcoded fixed squares — if visible, overlay rendering works */}
-        <div style={{ position: "fixed", top: 100, left: 300, width: 50, height: 50, background: "red", zIndex: 9999 }} />
-        <div style={{ position: "fixed", top: 100, left: 400, width: 50, height: 50, background: "red", zIndex: 9999 }} />
-        <div style={{ position: "fixed", top: 100, left: 500, width: 50, height: 50, background: "red", zIndex: 9999 }} />
       </div>
     </AppShell>
   );
