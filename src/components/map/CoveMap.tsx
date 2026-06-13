@@ -226,6 +226,20 @@ export default function CoveMap({ users, filterFn }: Props) {
             </div>
           )}
 
+          {/* DEBUG PANEL — remove once markers work */}
+          <div style={{ position: "absolute", top: 80, left: 8, background: "rgba(0,0,0,0.75)", color: "white", fontSize: 11, padding: "6px 10px", borderRadius: 6, zIndex: 9999, pointerEvents: "none", lineHeight: 1.6 }}>
+            <div>mapReadyVersion: {mapReadyVersion}</div>
+            <div>mapboxReady: {String(mapboxReady)}</div>
+            <div>markerPixels count: {Object.keys(markerPixels).length}</div>
+            <div>visibleUsers: {visibleUsers.length}</div>
+            {Object.keys(markerPixels).length > 0 && (
+              <div>first pixel: {JSON.stringify(markerPixels[visibleUsers[0]?.id])}</div>
+            )}
+          </div>
+
+          {/* DEBUG: one hardcoded circle at pixel (300,300) — if visible, abs positioning inside overlay works */}
+          <div style={{ position: "absolute", left: 300, top: 300, width: 40, height: 40, borderRadius: "50%", background: "blue", zIndex: 9999, border: "3px solid white" }} />
+
           {mapboxReady && selectedUser && (
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
               <ProfileCard
