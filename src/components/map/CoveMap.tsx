@@ -39,10 +39,13 @@ export default function CoveMap({ users, filterFn }: Props) {
   const markersRef = useRef<Array<{ remove: () => void }>>([]);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Default to showing the fallback map. We only switch to Mapbox once it
-  // fully loads AND confirms a working style. This way markers are always
-  // visible immediately — Mapbox is a progressive enhancement on top.
-  const [mapboxReady, setMapboxReady] = useState(false);
+  // mapReadyVersion increments each time the map fires "load" (including
+  // React Strict Mode's double-invoke, where setMapboxReady(true) would be
+  // a no-op because the value is already true, so the marker effect would
+  // never re-run for the second map). A counter always changes, guaranteeing
+  // a re-render and a fresh marker pass on the live map instance.
+  const [mapReadyVersion, setMapReadyVersion] = useState(0);
+  const mapboxReady = mapReadyVersion > 0;
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   const visibleUsers = filterFn ? users.filter(filterFn) : users;
@@ -78,7 +81,7 @@ export default function CoveMap({ users, filterFn }: Props) {
           () => {
             if (!isMounted) return;
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
-            setMapboxReady(true);
+            setMapReadyVersion((v) => v + 1);
           }
         );
 
@@ -117,7 +120,7 @@ export default function CoveMap({ users, filterFn }: Props) {
 
   // Add Mapbox markers whenever the map is ready or visible users change.
   useEffect(() => {
-    if (!mapboxReady || !mapRef.current || !mapboxglRef.current) return;
+    if (mapReadyVersion === 0 || !mapRef.current || !mapboxglRef.current) return;
 
     const map = mapRef.current;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -178,7 +181,7 @@ export default function CoveMap({ users, filterFn }: Props) {
 
       markersRef.current.push(marker as { remove: () => void });
     });
-  }, [mapboxReady, visibleUsers]);
+  }, [mapReadyVersion, visibleUsers]);
 
   return (
     <div className="relative w-full h-full">
