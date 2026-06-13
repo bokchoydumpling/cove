@@ -9,7 +9,15 @@ interface Props {
   filterFn?: (user: User) => boolean;
 }
 
-// Returns a hex color for inline styles (Mapbox markers can't use Tailwind classes)
+// Evaluated at build time by Next.js — baked into the client bundle.
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
+const TOKEN_IS_PLACEHOLDER =
+  !MAPBOX_TOKEN ||
+  MAPBOX_TOKEN === "your_mapbox_token_here" ||
+  MAPBOX_TOKEN.startsWith("your_");
+
+// Hex palette matching getAvatarColor so Mapbox DOM markers get real colors
+// without depending on Tailwind class-scanning of dynamically-returned strings.
 const AVATAR_HEX: Record<string, string> = {
   "bg-[#E8734A]": "#E8734A",
   "bg-[#7B9E87]": "#7B9E87",
@@ -29,19 +37,19 @@ export default function CoveMap({ users, filterFn }: Props) {
   const mapRef = useRef<unknown>(null);
   const mapboxglRef = useRef<unknown>(null);
   const markersRef = useRef<Array<{ remove: () => void }>>([]);
-  const [mapLoaded, setMapLoaded] = useState(false);
-  const [mapError, setMapError] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Default to showing the fallback map. We only switch to Mapbox once it
+  // fully loads AND confirms a working style. This way markers are always
+  // visible immediately — Mapbox is a progressive enhancement on top.
+  const [mapboxReady, setMapboxReady] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   const visibleUsers = filterFn ? users.filter(filterFn) : users;
 
-  // Init Mapbox
+  // Try to initialise Mapbox in the background (only if we have a real token).
   useEffect(() => {
-    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-    if (!token || token === "your_mapbox_token_here") {
-      setMapError(true);
-      return;
-    }
+    if (TOKEN_IS_PLACEHOLDER) return;
 
     let isMounted = true;
 
@@ -51,11 +59,11 @@ export default function CoveMap({ users, filterFn }: Props) {
         if (!isMounted || !mapContainer.current) return;
 
         mapboxglRef.current = mapboxgl;
-        (mapboxgl as unknown as { accessToken: string }).accessToken = token;
+        (mapboxgl as unknown as { accessToken: string }).accessToken = MAPBOX_TOKEN;
 
-        const map = new (mapboxgl as unknown as {
-          Map: new (opts: unknown) => unknown;
-        }).Map({
+        const map = new (
+          mapboxgl as unknown as { Map: new (o: unknown) => unknown }
+        ).Map({
           container: mapContainer.current,
           style: "mapbox://styles/mapbox/light-v11",
           center: [-122.4194, 37.7749],
@@ -64,40 +72,63 @@ export default function CoveMap({ users, filterFn }: Props) {
         });
 
         mapRef.current = map;
-        (map as { on: (e: string, cb: () => void) => void }).on("load", () => {
-          if (isMounted) setMapLoaded(true);
-        });
-      } catch {
-        if (isMounted) setMapError(true);
+
+        (map as { on: (e: string, cb: (e?: unknown) => void) => void }).on(
+          "load",
+          () => {
+            if (!isMounted) return;
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            setMapboxReady(true);
+          }
+        );
+
+        // Mapbox fires "error" for bad tokens, failed tile fetches, etc.
+        // We catch it and stay on the fallback rather than hanging forever.
+        (map as { on: (e: string, cb: (e?: unknown) => void) => void }).on(
+          "error",
+          (e) => {
+            console.warn("[Cove] Mapbox error — staying on fallback map:", e);
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            // mapboxReady stays false → fallback stays visible
+          }
+        );
+
+        // Belt-and-suspenders: if the map hasn't loaded within 8 s, give up.
+        timeoutRef.current = setTimeout(() => {
+          if (!isMounted) return;
+          console.warn("[Cove] Mapbox load timed out — staying on fallback map");
+          // mapboxReady stays false → fallback stays visible
+        }, 8000);
+      } catch (err) {
+        console.warn("[Cove] Mapbox failed to initialise:", err);
       }
     };
 
     initMap();
+
     return () => {
       isMounted = false;
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
       markersRef.current.forEach((m) => m.remove());
       markersRef.current = [];
       if (mapRef.current) (mapRef.current as { remove: () => void }).remove();
     };
   }, []);
 
-  // Add / refresh markers whenever the map is loaded or visible users change
+  // Add Mapbox markers whenever the map is ready or visible users change.
   useEffect(() => {
-    if (!mapLoaded || !mapRef.current || !mapboxglRef.current) return;
+    if (!mapboxReady || !mapRef.current || !mapboxglRef.current) return;
 
     const map = mapRef.current;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mapboxgl = mapboxglRef.current as any;
 
-    // Remove old markers
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
 
     visibleUsers.forEach((user) => {
       const hex = getAvatarHex(user.name);
-      const initials = getInitials(user.name);
 
-      // Outer wrapper (relative so the green dot can be absolute inside)
       const wrapper = document.createElement("div");
       wrapper.style.cssText = "position:relative;width:40px;height:40px;cursor:pointer;";
 
@@ -117,10 +148,9 @@ export default function CoveMap({ users, filterFn }: Props) {
         "justify-content:center",
         "cursor:pointer",
         "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
-        "transition:transform 0.15s ease,box-shadow 0.15s ease",
+        "transition:transform 0.15s,box-shadow 0.15s",
       ].join(";");
-      btn.textContent = initials;
-
+      btn.textContent = getInitials(user.name);
       btn.addEventListener("mouseenter", () => {
         btn.style.transform = "scale(1.15)";
         btn.style.boxShadow = "0 4px 16px rgba(0,0,0,0.25)";
@@ -129,17 +159,16 @@ export default function CoveMap({ users, filterFn }: Props) {
         btn.style.transform = "scale(1)";
         btn.style.boxShadow = "0 2px 10px rgba(0,0,0,0.18)";
       });
-      btn.addEventListener("click", () => {
-        setSelectedUser((prev) => (prev?.id === user.id ? null : user));
-      });
+      btn.addEventListener("click", () =>
+        setSelectedUser((prev) => (prev?.id === user.id ? null : user))
+      );
 
       wrapper.appendChild(btn);
 
-      // Green dot for "Open to Meet"
       if (user.availability === "Open to Meet") {
         const dot = document.createElement("span");
         dot.style.cssText =
-          "position:absolute;bottom:-1px;right:-1px;width:12px;height:12px;background:#7B9E87;border-radius:50%;border:2px solid white;";
+          "position:absolute;bottom:-1px;right:-1px;width:12px;height:12px;background:#7B9E87;border-radius:50%;border:2px solid white;pointer-events:none;";
         wrapper.appendChild(dot);
       }
 
@@ -149,42 +178,37 @@ export default function CoveMap({ users, filterFn }: Props) {
 
       markersRef.current.push(marker as { remove: () => void });
     });
-  }, [mapLoaded, visibleUsers]);
-
-  if (mapError) {
-    return (
-      <MapFallback
-        users={visibleUsers}
-        selectedUser={selectedUser}
-        onSelectUser={setSelectedUser}
-      />
-    );
-  }
+  }, [mapboxReady, visibleUsers]);
 
   return (
     <div className="relative w-full h-full">
-      <div ref={mapContainer} className="w-full h-full" />
+      {/* Fallback map — always rendered, hidden once Mapbox takes over */}
+      <div className={cn("absolute inset-0 transition-opacity duration-500", mapboxReady ? "opacity-0 pointer-events-none" : "opacity-100")}>
+        <MapFallback
+          users={visibleUsers}
+          selectedUser={selectedUser}
+          onSelectUser={setSelectedUser}
+        />
+      </div>
 
-      {!mapLoaded && (
-        <div className="absolute inset-0 bg-[#FAFAF7] flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-8 h-8 border-2 border-[#E8734A] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-sm text-[#737373]">Loading map…</p>
-          </div>
+      {/* Mapbox canvas — only mounted when we have a token to try */}
+      {!TOKEN_IS_PLACEHOLDER && (
+        <div className={cn("absolute inset-0 transition-opacity duration-500", mapboxReady ? "opacity-100" : "opacity-0 pointer-events-none")}>
+          <div ref={mapContainer} className="w-full h-full" />
+          {mapboxReady && selectedUser && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
+              <ProfileCard user={selectedUser} onClose={() => setSelectedUser(null)} />
+            </div>
+          )}
         </div>
       )}
 
-      {/* Profile card popup — fixed overlay so it's always readable */}
-      {selectedUser && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
-          <ProfileCard user={selectedUser} onClose={() => setSelectedUser(null)} />
-        </div>
-      )}
+      {/* Profile popup for Mapbox-only case is handled above */}
     </div>
   );
 }
 
-// --- Fallback map (no Mapbox token) ---
+// ─── Fallback map (illustration + CSS-positioned markers) ────────────────────
 
 const MARKER_POSITIONS = [
   { x: "18%", y: "62%" }, { x: "34%", y: "36%" }, { x: "22%", y: "47%" },
@@ -222,73 +246,111 @@ function MapFallback({
 
   return (
     <div className="relative w-full h-full bg-gradient-to-br from-[#E8F4F8] via-[#EEF2E6] to-[#F5EDDF]">
-      {/* Faint grid */}
-      <svg className="absolute inset-0 w-full h-full opacity-15 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+      {/* Faint street grid */}
+      <svg
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
         <defs>
-          <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
-            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#4A7C6F" strokeWidth="0.5" />
+          <pattern id="cove-grid" width="60" height="60" patternUnits="userSpaceOnUse">
+            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#4A7C6F" strokeWidth="0.4" opacity="0.15" />
           </pattern>
         </defs>
-        <rect width="100%" height="100%" fill="url(#grid)" />
-        <line x1="0" y1="35%" x2="100%" y2="33%" stroke="#B8C8B0" strokeWidth="2" opacity="0.6" />
-        <line x1="0" y1="55%" x2="100%" y2="57%" stroke="#B8C8B0" strokeWidth="1.5" opacity="0.5" />
-        <line x1="0" y1="72%" x2="100%" y2="70%" stroke="#B8C8B0" strokeWidth="1" opacity="0.4" />
-        <line x1="20%" y1="0" x2="22%" y2="100%" stroke="#B8C8B0" strokeWidth="2" opacity="0.6" />
-        <line x1="45%" y1="0" x2="43%" y2="100%" stroke="#B8C8B0" strokeWidth="1.5" opacity="0.5" />
-        <line x1="70%" y1="0" x2="72%" y2="100%" stroke="#B8C8B0" strokeWidth="2" opacity="0.6" />
-        <rect x="24%" y="38%" width="17%" height="14%" rx="4" fill="#C8DCBA" opacity="0.4" />
+        <rect width="100%" height="100%" fill="url(#cove-grid)" />
+        <line x1="0" y1="35%" x2="100%" y2="33%" stroke="#B8C8B0" strokeWidth="2" opacity="0.5" />
+        <line x1="0" y1="55%" x2="100%" y2="57%" stroke="#B8C8B0" strokeWidth="1.5" opacity="0.4" />
+        <line x1="0" y1="72%" x2="100%" y2="70%" stroke="#B8C8B0" strokeWidth="1" opacity="0.3" />
+        <line x1="20%" y1="0" x2="22%" y2="100%" stroke="#B8C8B0" strokeWidth="2" opacity="0.5" />
+        <line x1="45%" y1="0" x2="43%" y2="100%" stroke="#B8C8B0" strokeWidth="1.5" opacity="0.4" />
+        <line x1="70%" y1="0" x2="72%" y2="100%" stroke="#B8C8B0" strokeWidth="2" opacity="0.5" />
+        <rect x="24%" y="38%" width="17%" height="14%" rx="4" fill="#C8DCBA" opacity="0.35" />
       </svg>
 
-      {/* Neighborhood labels */}
+      {/* Neighbourhood labels */}
       {[
-        { label: "Mission", x: "20%", y: "65%" },
-        { label: "SoMa", x: "45%", y: "44%" },
-        { label: "Castro", x: "22%", y: "50%" },
+        { label: "Mission",      x: "20%", y: "65%" },
+        { label: "SoMa",         x: "45%", y: "44%" },
+        { label: "Castro",       x: "22%", y: "50%" },
         { label: "Hayes Valley", x: "33%", y: "39%" },
-        { label: "Marina", x: "15%", y: "17%" },
-        { label: "Temescal", x: "72%", y: "19%" },
-        { label: "Fruitvale", x: "80%", y: "62%" },
+        { label: "Marina",       x: "15%", y: "17%" },
+        { label: "Temescal",     x: "72%", y: "19%" },
+        { label: "Fruitvale",    x: "80%", y: "62%" },
         { label: "Lake Merritt", x: "67%", y: "37%" },
       ].map(({ label, x, y }) => (
         <span
           key={label}
-          className="absolute text-[9px] font-bold text-[#5A7A70] uppercase tracking-widest pointer-events-none select-none opacity-60"
-          style={{ left: x, top: y, transform: "translate(-50%, -50%)" }}
+          className="absolute text-[9px] font-bold text-[#5A7A70] uppercase tracking-widest pointer-events-none select-none opacity-50"
+          style={{ left: x, top: y, transform: "translate(-50%,-50%)" }}
         >
           {label}
         </span>
       ))}
 
-      {/* User markers */}
+      {/* User markers — inline styles for background so Tailwind scanning is irrelevant */}
       {users.map((user, i) => {
         const pos = MARKER_POSITIONS[i % MARKER_POSITIONS.length];
         const isSelected = selectedUser?.id === user.id;
+        const hex = getAvatarHex(user.name);
         return (
           <button
             key={user.id}
             onClick={() => handleSelect(user, pos.x, pos.y)}
-            className={cn(
-              "absolute flex items-center justify-center w-10 h-10 rounded-full border-2 border-white shadow-lg text-white text-xs font-bold cursor-pointer transition-all duration-150",
-              getAvatarColor(user.name),
-              user.streakCount >= 7 ? "streak-glow" : "",
-              isSelected
-                ? "scale-125 z-20 ring-2 ring-[#E8734A] ring-offset-1 shadow-xl"
-                : "z-10 hover:scale-110 hover:shadow-xl hover:z-10"
-            )}
-            style={{ left: pos.x, top: pos.y, transform: isSelected ? "translate(-50%, -50%) scale(1.25)" : "translate(-50%, -50%)" }}
             title={`${user.name} · ${user.profession}`}
+            style={{
+              position: "absolute",
+              left: pos.x,
+              top: pos.y,
+              transform: "translate(-50%,-50%)",
+              width: 40,
+              height: 40,
+              borderRadius: "50%",
+              background: hex,
+              border: isSelected ? "2.5px solid #E8734A" : "2.5px solid white",
+              boxShadow: isSelected
+                ? "0 0 0 3px rgba(232,115,74,0.35), 0 4px 16px rgba(0,0,0,0.2)"
+                : "0 2px 10px rgba(0,0,0,0.18)",
+              color: "white",
+              fontSize: 12,
+              fontWeight: 700,
+              fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
+              cursor: "pointer",
+              zIndex: isSelected ? 20 : 10,
+              transition: "transform 0.15s, box-shadow 0.15s",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            onMouseEnter={(e) => {
+              if (!isSelected) (e.currentTarget as HTMLButtonElement).style.transform = "translate(-50%,-50%) scale(1.15)";
+            }}
+            onMouseLeave={(e) => {
+              if (!isSelected) (e.currentTarget as HTMLButtonElement).style.transform = "translate(-50%,-50%)";
+            }}
           >
             {getInitials(user.name)}
+            {/* Green availability dot */}
             {user.availability === "Open to Meet" && (
-              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#7B9E87] rounded-full border-2 border-white pointer-events-none" />
+              <span
+                style={{
+                  position: "absolute",
+                  bottom: -1,
+                  right: -1,
+                  width: 12,
+                  height: 12,
+                  background: "#7B9E87",
+                  borderRadius: "50%",
+                  border: "2px solid white",
+                  pointerEvents: "none",
+                }}
+              />
             )}
           </button>
         );
       })}
 
-      {/* Profile card popup — positioned near the clicked marker, but clamped to screen */}
+      {/* Profile card popup — appears above or below the clicked marker */}
       {selectedUser && popupPos && (
-        <PopupOverlay
+        <FallbackPopup
           user={selectedUser}
           anchorX={popupPos.x}
           anchorY={popupPos.y}
@@ -296,13 +358,14 @@ function MapFallback({
         />
       )}
 
-      {/* Legend */}
-      <div className="absolute bottom-4 left-4 flex items-center gap-3">
-        <div className="bg-white/85 backdrop-blur-sm rounded-xl px-3 py-2 text-xs text-[#737373] shadow-sm">
-          📍 San Francisco + Oakland · <span className="font-semibold text-[#1A1A1A]">{users.length}</span> people nearby
+      {/* Map legend */}
+      <div className="absolute bottom-4 left-4 flex items-center gap-2">
+        <div className="bg-white/85 backdrop-blur-sm rounded-xl px-3 py-2 text-xs text-[#737373] shadow-sm border border-white/60">
+          📍 San Francisco + Oakland &nbsp;·&nbsp;
+          <span className="font-semibold text-[#1A1A1A]">{users.length}</span> people nearby
         </div>
-        <div className="bg-white/85 backdrop-blur-sm rounded-xl px-3 py-2 text-xs text-[#737373] shadow-sm flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-[#7B9E87] inline-block" />
+        <div className="bg-white/85 backdrop-blur-sm rounded-xl px-3 py-2 text-xs text-[#737373] shadow-sm border border-white/60 flex items-center gap-1.5">
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#7B9E87", display: "inline-block" }} />
           Open to Meet
         </div>
       </div>
@@ -310,7 +373,7 @@ function MapFallback({
   );
 }
 
-function PopupOverlay({
+function FallbackPopup({
   user,
   anchorX,
   anchorY,
@@ -321,33 +384,21 @@ function PopupOverlay({
   anchorY: string;
   onClose: () => void;
 }) {
-  // Parse percentage values to decide whether to flip the popup above or below
   const yPct = parseFloat(anchorY);
-  // If marker is in the bottom 40% of the map, show popup above the marker
-  // Otherwise show below
   const showAbove = yPct > 45;
 
-  const style: React.CSSProperties = {
-    position: "absolute",
-    left: anchorX,
-    top: anchorY,
-    transform: showAbove
-      ? "translate(-50%, calc(-100% - 28px))"
-      : "translate(-50%, 28px)",
-    zIndex: 30,
-  };
-
   return (
-    <div style={style}>
-      {/* Arrow */}
-      <div
-        className={cn(
-          "absolute left-1/2 -translate-x-1/2 w-0 h-0",
-          showAbove
-            ? "bottom-[-8px] border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white"
-            : "top-[-8px] border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-white"
-        )}
-      />
+    <div
+      style={{
+        position: "absolute",
+        left: anchorX,
+        top: anchorY,
+        transform: showAbove
+          ? "translate(-50%, calc(-100% - 24px))"
+          : "translate(-50%, 24px)",
+        zIndex: 30,
+      }}
+    >
       <ProfileCard user={user} onClose={onClose} />
     </div>
   );
