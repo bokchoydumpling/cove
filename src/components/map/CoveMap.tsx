@@ -3,7 +3,6 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import Avatar from "boring-avatars";
 import { Plus, Minus, Locate } from "lucide-react";
 import type { User } from "@/lib/types";
-import { cn } from "@/lib/utils";
 import ProfileCard from "@/components/profile/ProfileCard";
 
 interface Props {

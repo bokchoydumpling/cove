@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { Search, MapPin, Flame, Star } from "lucide-react";
+import { Search, MapPin } from "lucide-react";
 import Avatar from "boring-avatars";
 import AppShell from "@/components/layout/AppShell";
 import { useAppStore } from "@/store/useAppStore";

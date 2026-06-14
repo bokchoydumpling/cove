@@ -8,12 +8,12 @@ import { cn } from "@/lib/utils";
 import { AVATAR_PALETTE } from "@/components/map/CoveMap";
 
 const NAV = [
-  { href: "/map",      label: "Map",      icon: Map,           emoji: "🗺️" },
-  { href: "/people",   label: "People",   icon: Users,         emoji: "👥" },
-  { href: "/circles",  label: "Circles",  icon: Home,          emoji: "🏡" },
-  { href: "/events",   label: "Events",   icon: Calendar,      emoji: "🎉" },
-  { href: "/messages", label: "Messages", icon: MessageCircle, emoji: "💬", badge: 2 },
-  { href: "/activity", label: "Activity", icon: Zap,           emoji: "⚡" },
+  { href: "/map",      label: "Map",      icon: Map },
+  { href: "/people",   label: "People",   icon: Users },
+  { href: "/circles",  label: "Circles",  icon: Home },
+  { href: "/events",   label: "Events",   icon: Calendar },
+  { href: "/messages", label: "Messages", icon: MessageCircle, badge: 2 },
+  { href: "/activity", label: "Activity", icon: Zap },
 ];
 
 export default function Sidebar() {
@@ -45,7 +45,7 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-3 space-y-0.5">
-        {NAV.map(({ href, label, icon: Icon, emoji, badge }) => {
+        {NAV.map(({ href, label, icon: Icon, badge }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           return (
             <Link
