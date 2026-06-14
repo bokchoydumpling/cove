@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
-import Avatar from "boring-avatars";
 import { Plus, Minus, Locate } from "lucide-react";
 import type { User } from "@/lib/types";
 import ProfileCard from "@/components/profile/ProfileCard";
+import CoveAvatar from "@/components/ui/CoveAvatar";
 
 interface Props {
   users: User[];
@@ -29,15 +29,56 @@ function toLat(y: number, z: number) {
   return (Math.atan(Math.sinh(Math.PI - (2 * Math.PI * y) / (TILE * 2 ** z))) * 180) / Math.PI;
 }
 
-// ─── Avatar palette (warm & playful) ─────────────────────────────────────────
-
-export const AVATAR_PALETTE = ["#E8734A", "#F4A574", "#7B9E87", "#9B8EC4", "#6BAED6"];
-
 // ─── Default view ─────────────────────────────────────────────────────────────
 
 const DEFAULT = { lng: -122.33, lat: 37.77, zoom: 11 };
 const ZOOM_MIN = 9;
 const ZOOM_MAX = 15;
+
+// ─── Marker spread (push overlapping markers apart) ──────────────────────────
+
+interface MarkerPos {
+  user: User;
+  x: number;
+  y: number;
+  ox: number;
+  oy: number;
+}
+
+function spreadMarkers(
+  users: User[],
+  projFn: (lng: number, lat: number) => { x: number; y: number }
+): MarkerPos[] {
+  const MIN_DIST = 52; // px — 46px marker + 6px gap
+
+  const items: MarkerPos[] = users.map((user) => {
+    const { x, y } = projFn(user.coordinates.lng, user.coordinates.lat);
+    return { user, x, y, ox: 0, oy: 0 };
+  });
+
+  for (let iter = 0; iter < 4; iter++) {
+    for (let i = 0; i < items.length; i++) {
+      for (let j = i + 1; j < items.length; j++) {
+        const ax = items[i].x + items[i].ox;
+        const ay = items[i].y + items[i].oy;
+        const bx = items[j].x + items[j].ox;
+        const by = items[j].y + items[j].oy;
+        const d = Math.hypot(ax - bx, ay - by);
+        if (d < MIN_DIST && d > 0.001) {
+          const push = (MIN_DIST - d) / 2;
+          const nx = (bx - ax) / d;
+          const ny = (by - ay) / d;
+          items[i].ox -= nx * push;
+          items[i].oy -= ny * push;
+          items[j].ox += nx * push;
+          items[j].oy += ny * push;
+        }
+      }
+    }
+  }
+
+  return items;
+}
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -50,7 +91,7 @@ export default function CoveMap({ users, filterFn }: Props) {
 
   const visibleUsers = filterFn ? users.filter(filterFn) : users;
 
-  // Keep refs current for the non-passive wheel handler
+  // Keep refs current so native event handlers always see latest values
   const viewRef = useRef(view);
   viewRef.current = view;
   const sizeRef = useRef(size);
@@ -68,11 +109,64 @@ export default function CoveMap({ users, filterFn }: Props) {
     return () => obs.disconnect();
   }, []);
 
-  // Non-passive wheel zoom (so we can preventDefault)
+  // Native pointer + wheel listeners — bypasses React synthetic event quirks
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const handler = (e: WheelEvent) => {
+    if (!containerRef.current) return;
+    const el: HTMLDivElement = containerRef.current;
+
+    let dragging = false;
+    let moved = false;
+    let startX = 0;
+    let startY = 0;
+    let startLng = 0;
+    let startLat = 0;
+    let startZoom = DEFAULT.zoom;
+    let capturedId = -1;
+
+    function onDown(e: PointerEvent) {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      dragging = true;
+      moved = false;
+      startX = e.clientX;
+      startY = e.clientY;
+      startLng = viewRef.current.lng;
+      startLat = viewRef.current.lat;
+      startZoom = viewRef.current.zoom;
+      capturedId = e.pointerId;
+      el.setPointerCapture(e.pointerId);
+      setIsDragging(true);
+    }
+
+    function onMove(e: PointerEvent) {
+      if (!dragging || e.pointerId !== capturedId) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+      const z = startZoom;
+      setView((v) => ({
+        zoom: v.zoom,
+        lng: toLng(wx(startLng, z) - dx, z),
+        lat: toLat(wy(startLat, z) - dy, z),
+      }));
+    }
+
+    function onUp() {
+      if (moved) {
+        // Suppress the click that follows a drag so markers don't accidentally select
+        el.addEventListener(
+          "click",
+          (ev) => { ev.stopPropagation(); },
+          { capture: true, once: true }
+        );
+      }
+      dragging = false;
+      moved = false;
+      capturedId = -1;
+      setIsDragging(false);
+    }
+
+    function onWheel(e: WheelEvent) {
       e.preventDefault();
       const v = viewRef.current;
       const s = sizeRef.current;
@@ -86,47 +180,31 @@ export default function CoveMap({ users, filterFn }: Props) {
       const cxW = wx(v.lng, z) + (cx - s.w / 2);
       const cyW = wy(v.lat, z) + (cy - s.h / 2);
       const sc = 2 ** (newZoom - z);
-      const nz = newZoom;
       setView({
-        lng: toLng(cxW * sc - (cx - s.w / 2), nz),
-        lat: toLat(cyW * sc - (cy - s.h / 2), nz),
+        lng: toLng(cxW * sc - (cx - s.w / 2), newZoom),
+        lat: toLat(cyW * sc - (cy - s.h / 2), newZoom),
         zoom: newZoom,
       });
+    }
+
+    el.addEventListener("pointerdown", onDown);
+    el.addEventListener("pointermove", onMove);
+    el.addEventListener("pointerup", onUp);
+    el.addEventListener("pointercancel", onUp);
+    el.addEventListener("wheel", onWheel, { passive: false });
+
+    return () => {
+      el.removeEventListener("pointerdown", onDown);
+      el.removeEventListener("pointermove", onMove);
+      el.removeEventListener("pointerup", onUp);
+      el.removeEventListener("pointercancel", onUp);
+      el.removeEventListener("wheel", onWheel);
     };
-    el.addEventListener("wheel", handler, { passive: false });
-    return () => el.removeEventListener("wheel", handler);
   }, []);
-
-  // Pan via pointer capture
-  const dragStart = useRef<{ x: number; y: number; lng: number; lat: number } | null>(null);
-
-  function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
-    if (e.button !== 0) return;
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    dragStart.current = { x: e.clientX, y: e.clientY, lng: view.lng, lat: view.lat };
-    setIsDragging(true);
-  }
-
-  function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
-    if (!dragStart.current) return;
-    const dx = e.clientX - dragStart.current.x;
-    const dy = e.clientY - dragStart.current.y;
-    const z = view.zoom;
-    setView(v => ({
-      ...v,
-      lng: toLng(wx(dragStart.current!.lng, z) - dx, z),
-      lat: toLat(wy(dragStart.current!.lat, z) - dy, z),
-    }));
-  }
-
-  function onPointerUp() {
-    dragStart.current = null;
-    setIsDragging(false);
-  }
 
   // Zoom buttons
   const zoomBy = useCallback((delta: number) => {
-    setView(v => ({ ...v, zoom: Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, v.zoom + delta)) }));
+    setView((v) => ({ ...v, zoom: Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, v.zoom + delta)) }));
   }, []);
 
   const resetView = useCallback(() => setView(DEFAULT), []);
@@ -140,15 +218,18 @@ export default function CoveMap({ users, filterFn }: Props) {
     };
   }
 
+  // Compute spread marker positions
+  const markerPositions = spreadMarkers(visibleUsers, proj);
+
   return (
     <div
       ref={containerRef}
       className="relative w-full h-full overflow-hidden select-none"
-      style={{ cursor: isDragging ? "grabbing" : "grab", touchAction: "none", background: "linear-gradient(135deg, #EAF4F0 0%, #EEF2E8 40%, #F5EDDF 100%)" }}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerLeave={onPointerUp}
+      style={{
+        cursor: isDragging ? "grabbing" : "grab",
+        touchAction: "none",
+        background: "linear-gradient(135deg, #EAF4F0 0%, #EEF2E8 40%, #F5EDDF 100%)",
+      }}
     >
       {/* Subtle background grid */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30">
@@ -183,25 +264,26 @@ export default function CoveMap({ users, filterFn }: Props) {
       ))}
 
       {/* User markers */}
-      {visibleUsers.map((user) => {
-        const { x, y } = proj(user.coordinates.lng, user.coordinates.lat);
+      {markerPositions.map(({ user, x, y, ox, oy }) => {
+        const px = x + ox;
+        const py = y + oy;
         // Cull off-screen markers
-        if (x < -60 || x > size.w + 60 || y < -60 || y > size.h + 60) return null;
+        if (px < -60 || px > size.w + 60 || py < -60 || py > size.h + 60) return null;
         const isSelected = selectedUser?.id === user.id;
         return (
           <div
             key={user.id}
             className="map-marker absolute"
             style={{
-              left: x,
-              top: y,
+              left: px,
+              top: py,
               transform: "translate(-50%, -50%)",
               zIndex: isSelected ? 30 : 10,
               pointerEvents: "auto",
             }}
             onClick={(e) => {
               e.stopPropagation();
-              if (!isDragging) setSelectedUser((p) => (p?.id === user.id ? null : user));
+              setSelectedUser((p) => (p?.id === user.id ? null : user));
             }}
           >
             <div
@@ -217,14 +299,16 @@ export default function CoveMap({ users, filterFn }: Props) {
                   : "0 2px 12px rgba(0,0,0,0.16)",
               }}
             >
-              <Avatar size={46} name={user.name} variant="beam" colors={AVATAR_PALETTE} />
+              <CoveAvatar src={user.avatar} name={user.name} size={46} />
             </div>
             {user.availability === "Open to Meet" && (
               <span
                 className="availability-pulse absolute"
                 style={{
-                  bottom: -1, right: -1,
-                  width: 13, height: 13,
+                  bottom: -1,
+                  right: -1,
+                  width: 13,
+                  height: 13,
                   background: "#43D09F",
                   borderRadius: "50%",
                   border: "2.5px solid white",

@@ -2,11 +2,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Search, MapPin } from "lucide-react";
-import Avatar from "boring-avatars";
 import AppShell from "@/components/layout/AppShell";
 import { useAppStore } from "@/store/useAppStore";
 import { cn, getProfessionColor } from "@/lib/utils";
-import { AVATAR_PALETTE } from "@/components/map/CoveMap";
+import CoveAvatar from "@/components/ui/CoveAvatar";
 import type { Profession, Interest } from "@/lib/types";
 
 const PROF_FILTERS: Profession[] = [
@@ -121,7 +120,7 @@ export default function PeoplePage() {
                         border: "2.5px solid white",
                         boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
                       }}>
-                        <Avatar size={48} name={user.name} variant="beam" colors={AVATAR_PALETTE} />
+                        <CoveAvatar src={user.avatar} name={user.name} size={48} />
                       </div>
                       {user.streakCount >= 7 && (
                         <span className="absolute -bottom-0.5 -right-0.5 text-xs leading-none">🔥</span>

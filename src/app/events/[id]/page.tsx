@@ -4,7 +4,8 @@ import Link from "next/link";
 import { ArrowLeft, Calendar, MapPin, Users, ExternalLink } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import { useAppStore } from "@/store/useAppStore";
-import { cn, formatFullDate, getInitials, getAvatarColor } from "@/lib/utils";
+import { cn, formatFullDate } from "@/lib/utils";
+import CoveAvatar from "@/components/ui/CoveAvatar";
 
 export default function EventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -112,8 +113,8 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
               <div className="bg-white rounded-2xl border border-[#E8E4DC] p-4">
                 <h3 className="text-xs font-semibold text-[#B0ABA3] uppercase tracking-wide mb-3">Hosted by</h3>
                 <Link href={`/profile/${host.id}`} className="flex items-center gap-3 hover:opacity-80">
-                  <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold", getAvatarColor(host.name))}>
-                    {getInitials(host.name)}
+                  <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", flexShrink: 0 }}>
+                    <CoveAvatar src={host.avatar} name={host.name} size={40} />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-[#1A1A1A]">{host.name}</p>
@@ -147,13 +148,8 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
               <div className="space-y-2.5">
                 {event.attendees.map((a) => (
                   <div key={a.userId} className="flex items-center gap-2">
-                    <div
-                      className={cn(
-                        "w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-semibold shrink-0",
-                        getAvatarColor(a.name)
-                      )}
-                    >
-                      {getInitials(a.name)}
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", flexShrink: 0 }}>
+                      <CoveAvatar src={a.avatar} name={a.name} size={28} />
                     </div>
                     <span className="text-xs text-[#3D3D3D] truncate">{a.name}</span>
                   </div>

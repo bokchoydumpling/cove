@@ -4,7 +4,8 @@ import Link from "next/link";
 import { ArrowLeft, Users, ChevronUp, MessageSquare, Pin, Tag } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import { useAppStore } from "@/store/useAppStore";
-import { cn, getInitials, getAvatarColor, formatRelativeTime } from "@/lib/utils";
+import { cn, formatRelativeTime } from "@/lib/utils";
+import CoveAvatar from "@/components/ui/CoveAvatar";
 import type { ForumPost, ForumReply } from "@/lib/types";
 
 function ReplyItem({ reply, depth = 0 }: { reply: ForumReply; depth?: number }) {
@@ -12,13 +13,8 @@ function ReplyItem({ reply, depth = 0 }: { reply: ForumReply; depth?: number }) 
   const [count, setCount] = useState(reply.upvotes);
   return (
     <div className={cn("flex gap-3", depth > 0 ? "pl-8 border-l-2 border-[#F0EDE6]" : "")}>
-      <div
-        className={cn(
-          "w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-semibold shrink-0",
-          getAvatarColor(reply.authorName)
-        )}
-      >
-        {getInitials(reply.authorName)}
+      <div style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", flexShrink: 0 }}>
+        <CoveAvatar src={reply.authorAvatar} name={reply.authorName} size={28} />
       </div>
       <div className="flex-1">
         <div className="flex items-center gap-2">
@@ -88,13 +84,8 @@ function PostItem({ post }: { post: ForumPost }) {
             <p className="text-xs text-[#4A4A4A] mt-2 leading-relaxed">{post.body}</p>
           )}
           <div className="flex items-center gap-3 mt-2">
-            <div
-              className={cn(
-                "w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-semibold",
-                getAvatarColor(post.authorName)
-              )}
-            >
-              {getInitials(post.authorName)}
+            <div style={{ width: 20, height: 20, borderRadius: "50%", overflow: "hidden" }}>
+              <CoveAvatar src={post.authorAvatar} name={post.authorName} size={20} />
             </div>
             <span className="text-[10px] text-[#737373]">{post.authorName}</span>
             <button
@@ -196,8 +187,8 @@ export default function CirclePage({ params }: { params: Promise<{ id: string }>
               <div className="space-y-2">
                 {members.slice(0, 5).map((u) => u && (
                   <Link key={u.id} href={`/profile/${u.id}`} className="flex items-center gap-2 hover:opacity-80">
-                    <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-semibold", getAvatarColor(u.name))}>
-                      {getInitials(u.name)}
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden" }}>
+                      <CoveAvatar src={u.avatar} name={u.name} size={28} />
                     </div>
                     <div>
                       <p className="text-xs font-medium text-[#1A1A1A]">{u.name}</p>

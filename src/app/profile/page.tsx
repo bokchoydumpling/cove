@@ -7,7 +7,8 @@ import CommunityScoreCard from "@/components/profile/CommunityScoreCard";
 import BadgeList from "@/components/profile/BadgeList";
 import ShowcaseCarousel from "@/components/profile/ShowcaseCarousel";
 import VouchSection from "@/components/profile/VouchSection";
-import { cn, getInitials, getAvatarColor, getProfessionColor, formatRelativeTime } from "@/lib/utils";
+import { cn, getProfessionColor, formatRelativeTime } from "@/lib/utils";
+import CoveAvatar from "@/components/ui/CoveAvatar";
 import type { VisibilityState } from "@/lib/types";
 
 const VISIBILITY_OPTIONS: VisibilityState[] = [
@@ -36,12 +37,11 @@ export default function ProfilePage() {
             <div className="flex items-end gap-4 -mt-8 mb-4">
               <div
                 className={cn(
-                  "w-16 h-16 rounded-2xl border-4 border-white flex items-center justify-center text-white text-xl font-bold shadow-md",
-                  getAvatarColor(currentUser.name),
+                  "w-16 h-16 rounded-2xl border-4 border-white overflow-hidden shadow-md",
                   currentUser.streakCount >= 7 ? "streak-glow" : ""
                 )}
               >
-                {getInitials(currentUser.name)}
+                <CoveAvatar src={currentUser.avatar} name={currentUser.name} size={64} />
               </div>
               <div className="mb-1 flex-1">
                 <div className="flex items-center gap-2">

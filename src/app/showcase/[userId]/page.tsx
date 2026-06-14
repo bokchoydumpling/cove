@@ -4,7 +4,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import { useAppStore } from "@/store/useAppStore";
-import { cn, getInitials, getAvatarColor, formatShortDate } from "@/lib/utils";
+import { cn, formatShortDate } from "@/lib/utils";
+import CoveAvatar from "@/components/ui/CoveAvatar";
 import type { ShowcaseReaction } from "@/lib/types";
 
 const REACTIONS: { key: ShowcaseReaction; emoji: string; label: string }[] = [
@@ -62,13 +63,8 @@ export default function ShowcasePage({ params }: { params: Promise<{ userId: str
 
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
-          <div
-            className={cn(
-              "w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold",
-              getAvatarColor(user.name)
-            )}
-          >
-            {getInitials(user.name)}
+          <div style={{ width: 48, height: 48, borderRadius: 12, overflow: "hidden" }}>
+            <CoveAvatar src={user.avatar} name={user.name} size={48} />
           </div>
           <div>
             <h1 className="text-xl font-bold text-[#1A1A1A]">{user.name}&apos;s Showcase</h1>

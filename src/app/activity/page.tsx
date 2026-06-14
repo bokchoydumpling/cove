@@ -2,7 +2,8 @@
 import Link from "next/link";
 import AppShell from "@/components/layout/AppShell";
 import { useAppStore } from "@/store/useAppStore";
-import { cn, getInitials, getAvatarColor, formatRelativeTime } from "@/lib/utils";
+import { cn, formatRelativeTime } from "@/lib/utils";
+import CoveAvatar from "@/components/ui/CoveAvatar";
 
 const ACTIVITY_FEED = [
   { id: "a1", type: "new_neighbor", actorId: "u13", content: "joined your neighborhood and they're into AI and coffee.", time: "2026-06-12T10:00:00Z", icon: "👋" },
@@ -74,14 +75,9 @@ export default function ActivityPage() {
             if (!user) return null;
             return (
               <div key={item.id} className="bg-white rounded-2xl border border-[#E8E4DC] p-4 flex gap-3">
-                <div className="relative">
-                  <div
-                    className={cn(
-                      "w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0",
-                      getAvatarColor(user.name)
-                    )}
-                  >
-                    {getInitials(user.name)}
+                <div className="relative shrink-0">
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", overflow: "hidden", border: "2px solid white", boxShadow: "0 1px 6px rgba(0,0,0,0.1)" }}>
+                    <CoveAvatar src={user.avatar} name={user.name} size={36} />
                   </div>
                   <span className="absolute -bottom-0.5 -right-0.5 text-sm">{item.icon}</span>
                 </div>

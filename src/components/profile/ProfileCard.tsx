@@ -1,10 +1,9 @@
 "use client";
 import Link from "next/link";
 import { X, MapPin, MessageCircle, ExternalLink } from "lucide-react";
-import Avatar from "boring-avatars";
 import type { User } from "@/lib/types";
 import { cn, getProfessionColor, formatRelativeTime } from "@/lib/utils";
-import { AVATAR_PALETTE } from "@/components/map/CoveMap";
+import CoveAvatar from "@/components/ui/CoveAvatar";
 
 interface ProfileCardProps {
   user: User;
@@ -53,7 +52,7 @@ export default function ProfileCard({ user, onClose, compact = false }: ProfileC
               border: "3px solid white",
               boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
             }}>
-              <Avatar size={56} name={user.name} variant="beam" colors={AVATAR_PALETTE} />
+              <CoveAvatar src={user.avatar} name={user.name} size={56} />
             </div>
             {user.streakCount >= 7 && (
               <span className="absolute -bottom-1 -right-1 text-sm leading-none">🔥</span>

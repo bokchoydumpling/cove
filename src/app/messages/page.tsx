@@ -3,7 +3,8 @@ import { useState } from "react";
 import { Search, Send } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import { useAppStore } from "@/store/useAppStore";
-import { cn, getInitials, getAvatarColor, formatRelativeTime } from "@/lib/utils";
+import { cn, formatRelativeTime } from "@/lib/utils";
+import CoveAvatar from "@/components/ui/CoveAvatar";
 import type { User } from "@/lib/types";
 
 const MOCK_CONVERSATIONS = [
@@ -126,8 +127,8 @@ export default function MessagesPage() {
                   )}
                 >
                   {user ? (
-                    <div className={cn("w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0", getAvatarColor(user.name))}>
-                      {getInitials(user.name)}
+                    <div style={{ width: 36, height: 36, borderRadius: "50%", overflow: "hidden", flexShrink: 0 }}>
+                      <CoveAvatar src={user.avatar} name={user.name} size={36} />
                     </div>
                   ) : (
                     <div className="w-9 h-9 rounded-full bg-[#F0EDE6] flex items-center justify-center text-lg shrink-0">
@@ -161,8 +162,8 @@ export default function MessagesPage() {
                 const u = getUser(selectedConv.userId);
                 return u ? (
                   <>
-                    <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold", getAvatarColor(u.name))}>
-                      {getInitials(u.name)}
+                    <div style={{ width: 32, height: 32, borderRadius: "50%", overflow: "hidden" }}>
+                      <CoveAvatar src={u.avatar} name={u.name} size={32} />
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-[#1A1A1A]">{u.name}</p>
@@ -191,8 +192,8 @@ export default function MessagesPage() {
                 return (
                   <div key={msg.id} className={cn("flex gap-2.5", isMe ? "flex-row-reverse" : "")}>
                     {!isMe && sender && (
-                      <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-semibold shrink-0", getAvatarColor(sender.name))}>
-                        {getInitials(sender.name)}
+                      <div style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", flexShrink: 0 }}>
+                        <CoveAvatar src={sender.avatar} name={sender.name} size={28} />
                       </div>
                     )}
                     <div className={cn("max-w-xs", isMe ? "items-end" : "items-start", "flex flex-col")}>

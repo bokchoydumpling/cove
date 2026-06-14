@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Calendar, MapPin, Search } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import { useAppStore } from "@/store/useAppStore";
-import { cn, formatEventDate, getInitials, getAvatarColor } from "@/lib/utils";
+import { cn, formatEventDate } from "@/lib/utils";
+import CoveAvatar from "@/components/ui/CoveAvatar";
 import type { EventCategory } from "@/lib/types";
 
 const CATS: EventCategory[] = ["Coffee Chat","Meetup","Workshop","Volunteer","Hike","Coworking","Happy Hour","Dinner","Talk","Social"];
@@ -152,10 +153,10 @@ function EventCard({ event, featured = false }: { event: Event; featured?: boole
                 {event.attendees.slice(0, 3).map((a) => (
                   <div
                     key={a.userId}
-                    className={cn("w-5 h-5 rounded-full border border-white flex items-center justify-center text-[8px] text-white font-semibold", getAvatarColor(a.name))}
                     title={a.name}
+                    style={{ width: 20, height: 20, borderRadius: "50%", overflow: "hidden", border: "1.5px solid white", flexShrink: 0 }}
                   >
-                    {getInitials(a.name)}
+                    <CoveAvatar src={a.avatar} name={a.name} size={20} />
                   </div>
                 ))}
               </div>

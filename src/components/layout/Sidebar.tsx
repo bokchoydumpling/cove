@@ -2,10 +2,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Map, Users, MessageCircle, Calendar, Zap, User, Home } from "lucide-react";
-import Avatar from "boring-avatars";
 import { useAppStore } from "@/store/useAppStore";
 import { cn } from "@/lib/utils";
-import { AVATAR_PALETTE } from "@/components/map/CoveMap";
+import CoveAvatar from "@/components/ui/CoveAvatar";
 
 const NAV = [
   { href: "/map",      label: "Map",      icon: Map },
@@ -104,7 +103,7 @@ export default function Sidebar() {
             boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
             flexShrink: 0,
           }}>
-            <Avatar size={34} name={currentUser.name} variant="beam" colors={AVATAR_PALETTE} />
+            <CoveAvatar src={currentUser.avatar} name={currentUser.name} size={34} />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-[#18181B] truncate">{currentUser.name}</p>

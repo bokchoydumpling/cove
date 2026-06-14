@@ -1,5 +1,6 @@
 import type { Vouch } from "@/lib/types";
-import { getInitials, getAvatarColor, formatRelativeTime, cn } from "@/lib/utils";
+import { formatRelativeTime, cn } from "@/lib/utils";
+import CoveAvatar from "@/components/ui/CoveAvatar";
 
 interface Props {
   vouches: Vouch[];
@@ -23,13 +24,8 @@ export default function VouchSection({ vouches }: Props) {
       <div className="space-y-3">
         {vouches.map((v) => (
           <div key={v.id} className="flex gap-3">
-            <div
-              className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0",
-                getAvatarColor(v.giverName)
-              )}
-            >
-              {getInitials(v.giverName)}
+            <div style={{ width: 32, height: 32, borderRadius: "50%", overflow: "hidden", flexShrink: 0 }}>
+              <CoveAvatar src={v.giverAvatar} name={v.giverName} size={32} />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">

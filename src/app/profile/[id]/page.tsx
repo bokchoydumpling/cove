@@ -8,7 +8,8 @@ import CommunityScoreCard from "@/components/profile/CommunityScoreCard";
 import BadgeList from "@/components/profile/BadgeList";
 import ShowcaseCarousel from "@/components/profile/ShowcaseCarousel";
 import VouchSection from "@/components/profile/VouchSection";
-import { cn, getInitials, getAvatarColor, getProfessionColor, formatRelativeTime } from "@/lib/utils";
+import { cn, getProfessionColor, formatRelativeTime } from "@/lib/utils";
+import CoveAvatar from "@/components/ui/CoveAvatar";
 
 export default function UserProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -42,12 +43,11 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
             <div className="flex items-end gap-4 -mt-7 mb-4">
               <div
                 className={cn(
-                  "w-14 h-14 rounded-2xl border-4 border-white flex items-center justify-center text-white text-lg font-bold shadow-md",
-                  getAvatarColor(user.name),
+                  "w-14 h-14 rounded-2xl border-4 border-white overflow-hidden shadow-md",
                   user.streakCount >= 7 ? "streak-glow" : ""
                 )}
               >
-                {getInitials(user.name)}
+                <CoveAvatar src={user.avatar} name={user.name} size={56} />
               </div>
               <div className="flex-1 mb-0.5">
                 <div className="flex items-center gap-2">
