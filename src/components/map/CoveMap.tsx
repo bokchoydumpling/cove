@@ -3,7 +3,6 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Plus, Minus, Locate } from "lucide-react";
 import type { User } from "@/lib/types";
 import ProfileCard from "@/components/profile/ProfileCard";
-import CoveAvatar from "@/components/ui/CoveAvatar";
 
 interface Props {
   users: User[];
@@ -49,7 +48,7 @@ function spreadMarkers(
   users: User[],
   projFn: (lng: number, lat: number) => { x: number; y: number }
 ): MarkerPos[] {
-  const MIN_DIST = 52; // px — 46px marker + 6px gap
+  const MIN_DIST = 60; // px — 56px character + 4px gap
 
   const items: MarkerPos[] = users.map((user) => {
     const { x, y } = projFn(user.coordinates.lng, user.coordinates.lat);
@@ -262,12 +261,12 @@ export default function CoveMap({ users, filterFn }: Props) {
         </span>
       ))}
 
-      {/* User markers */}
+      {/* User markers — full-body open-peeps characters standing at their location */}
       {markerPositions.map(({ user, x, y, ox, oy }) => {
         const px = x + ox;
         const py = y + oy;
-        // Cull off-screen markers
-        if (px < -60 || px > size.w + 60 || py < -60 || py > size.h + 60) return null;
+        // Cull: character body extends ~76% of ~75px above the coordinate = ~57px up
+        if (px < -80 || px > size.w + 80 || py < -100 || py > size.h + 40) return null;
         const isSelected = selectedUser?.id === user.id;
         return (
           <div
@@ -276,45 +275,65 @@ export default function CoveMap({ users, filterFn }: Props) {
             style={{
               left: px,
               top: py,
-              transform: "translate(-50%, -50%)",
+              // Feet sit at the coordinate; body stands above, name label below
+              transform: "translate(-50%, -76%)",
               zIndex: isSelected ? 30 : 10,
               pointerEvents: "auto",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              filter: isSelected
+                ? "drop-shadow(0 0 8px rgba(232,115,74,0.7)) drop-shadow(0 2px 10px rgba(0,0,0,0.2))"
+                : "drop-shadow(0 2px 6px rgba(0,0,0,0.15))",
             }}
             onClick={(e) => {
               e.stopPropagation();
               setSelectedUser((p) => (p?.id === user.id ? null : user));
             }}
           >
+            {/* Full-body standing character — no circle crop */}
+            <img
+              src={`https://api.dicebear.com/7.x/open-peeps/svg?seed=${encodeURIComponent(user.name)}&backgroundColor=transparent`}
+              width={56}
+              height={56}
+              alt=""
+              draggable={false}
+              style={{ display: "block", pointerEvents: "none", userSelect: "none" }}
+            />
+            {/* Name + availability pill at feet level */}
             <div
-              className="map-marker-inner relative"
               style={{
-                width: 46,
-                height: 46,
-                borderRadius: "50%",
-                overflow: "hidden",
-                border: isSelected ? "3px solid #E8734A" : "2.5px solid white",
-                boxShadow: isSelected
-                  ? "0 0 0 4px rgba(232,115,74,0.3), 0 6px 20px rgba(0,0,0,0.22)"
-                  : "0 2px 12px rgba(0,0,0,0.16)",
+                fontSize: 9,
+                fontWeight: 700,
+                lineHeight: "1.2",
+                color: "#18181B",
+                background: isSelected ? "#FFF1EC" : "rgba(255,255,255,0.92)",
+                border: `1.5px solid ${isSelected ? "#E8734A" : "rgba(0,0,0,0.07)"}`,
+                borderRadius: 6,
+                padding: "2px 6px",
+                marginTop: 1,
+                boxShadow: "0 1px 5px rgba(0,0,0,0.12)",
+                whiteSpace: "nowrap",
+                pointerEvents: "none",
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
               }}
             >
-              <CoveAvatar src={user.avatar} name={user.name} size={46} />
+              {user.availability === "Open to Meet" && (
+                <span
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: "#43D09F",
+                    display: "inline-block",
+                    flexShrink: 0,
+                  }}
+                />
+              )}
+              {user.name.split(" ")[0]}
             </div>
-            {user.availability === "Open to Meet" && (
-              <span
-                className="availability-pulse absolute"
-                style={{
-                  bottom: -1,
-                  right: -1,
-                  width: 13,
-                  height: 13,
-                  background: "#43D09F",
-                  borderRadius: "50%",
-                  border: "2.5px solid white",
-                  pointerEvents: "none",
-                }}
-              />
-            )}
           </div>
         );
       })}
