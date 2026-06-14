@@ -5,18 +5,18 @@ import { Map, Users, Home, Calendar, User, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { href: "/map", label: "Map", icon: Map },
-  { href: "/people", label: "People", icon: Users },
-  { href: "/circles", label: "Circles", icon: Home },
-  { href: "/events", label: "Events", icon: Calendar },
+  { href: "/map",      label: "Map",      icon: Map },
+  { href: "/people",   label: "People",   icon: Users },
+  { href: "/circles",  label: "Circles",  icon: Home },
+  { href: "/events",   label: "Events",   icon: Calendar },
   { href: "/messages", label: "Messages", icon: MessageCircle },
-  { href: "/profile", label: "Profile", icon: User },
+  { href: "/profile",  label: "Me",       icon: User },
 ];
 
 export default function MobileNav() {
   const pathname = usePathname();
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E8E4DC] flex z-40 md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-[#F0EDE6] flex z-40 md:hidden pb-safe">
       {NAV.map(({ href, label, icon: Icon }) => {
         const active = pathname === href || pathname.startsWith(href + "/");
         return (
@@ -24,11 +24,16 @@ export default function MobileNav() {
             key={href}
             href={href}
             className={cn(
-              "flex-1 flex flex-col items-center py-2 gap-0.5 text-[10px] font-medium transition-colors",
-              active ? "text-[#E8734A]" : "text-[#9E9790]"
+              "flex-1 flex flex-col items-center py-2.5 gap-0.5 text-[10px] font-semibold transition-all",
+              active ? "text-[#E8734A]" : "text-[#A1A1AA]"
             )}
           >
-            <Icon size={20} strokeWidth={active ? 2.5 : 2} />
+            <div className={cn(
+              "flex items-center justify-center w-8 h-5 rounded-full transition-all",
+              active && "bg-[#FFF1EC]"
+            )}>
+              <Icon size={18} strokeWidth={active ? 2.5 : 1.8} />
+            </div>
             {label}
           </Link>
         );

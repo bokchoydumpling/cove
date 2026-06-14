@@ -1,10 +1,12 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { Search, Flame, Star, MapPin } from "lucide-react";
+import { Search, MapPin, Flame, Star } from "lucide-react";
+import Avatar from "boring-avatars";
 import AppShell from "@/components/layout/AppShell";
 import { useAppStore } from "@/store/useAppStore";
-import { cn, getInitials, getAvatarColor, getProfessionColor } from "@/lib/utils";
+import { cn, getProfessionColor } from "@/lib/utils";
+import { AVATAR_PALETTE } from "@/components/map/CoveMap";
 import type { Profession, Interest } from "@/lib/types";
 
 const PROF_FILTERS: Profession[] = [
@@ -14,6 +16,14 @@ const PROF_FILTERS: Profession[] = [
 const INTEREST_FILTERS: Interest[] = [
   "AI","Startups","Coffee","Art","Music","Food","Fitness","Photography","Books","Local Events",
 ];
+
+const AVAIL_STYLE: Record<string, { color: string; bg: string }> = {
+  "Open to Meet":    { color: "#1A7A5A", bg: "#D1FAE5" },
+  "Open to Chat":    { color: "#1D5FAA", bg: "#DBEAFE" },
+  "Attending Events":{ color: "#6B21A8", bg: "#F3E8FF" },
+  "Exploring":       { color: "#92400E", bg: "#FEF3C7" },
+  "Just Browsing":   { color: "#374151", bg: "#F3F4F6" },
+};
 
 export default function PeoplePage() {
   const { users } = useAppStore();
@@ -35,36 +45,37 @@ export default function PeoplePage() {
       <div className="max-w-4xl mx-auto px-6 py-6">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-[#1A1A1A]">People</h1>
-          <p className="text-[#737373] text-sm mt-1">
+          <h1 className="text-2xl font-bold text-[#18181B]">People 👥</h1>
+          <p className="text-[#71717A] text-sm mt-1">
             {users.length} interesting people across San Francisco & Oakland
           </p>
         </div>
 
         {/* Search */}
         <div className="relative mb-4">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#B0ABA3]" />
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A1A1AA]" />
           <input
             type="text"
             placeholder="Search by name, bio, or what they're into…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 bg-white border border-[#E8E4DC] rounded-xl text-sm text-[#1A1A1A] placeholder-[#B0ABA3] focus:outline-none focus:ring-2 focus:ring-[#E8734A]/30 focus:border-[#E8734A]"
+            className="w-full pl-10 pr-4 py-3 bg-white border border-[#E4E4E7] rounded-2xl text-sm text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:ring-2 focus:ring-[#E8734A]/25 focus:border-[#E8734A] transition-all"
           />
         </div>
 
         {/* Profession filters */}
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-2">
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-2 scrollbar-hide">
           {PROF_FILTERS.map((p) => (
             <button
               key={p}
               onClick={() => setActiveProfession(activeProfession === p ? null : p)}
               className={cn(
-                "shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-all",
+                "shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all",
                 activeProfession === p
-                  ? "bg-[#E8734A] text-white border-[#E8734A]"
-                  : "bg-white text-[#4A4A4A] border-[#E8E4DC] hover:border-[#E8734A]"
+                  ? "text-white border-transparent shadow-sm"
+                  : "bg-white text-[#52525B] border-[#E4E4E7] hover:border-[#E8734A] hover:text-[#E8734A]"
               )}
+              style={activeProfession === p ? { background: "linear-gradient(135deg, #E8734A, #F4A574)", border: "none" } : {}}
             >
               {p}
             </button>
@@ -72,99 +83,112 @@ export default function PeoplePage() {
         </div>
 
         {/* Interest filters */}
-        <div className="flex gap-2 overflow-x-auto pb-3 mb-4">
+        <div className="flex gap-2 overflow-x-auto pb-3 mb-4 scrollbar-hide">
           {INTEREST_FILTERS.map((i) => (
             <button
               key={i}
               onClick={() => setActiveInterest(activeInterest === i ? null : i)}
               className={cn(
-                "shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-all",
+                "shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all",
                 activeInterest === i
-                  ? "bg-[#7B9E87] text-white border-[#7B9E87]"
-                  : "bg-white text-[#4A4A4A] border-[#E8E4DC] hover:border-[#7B9E87]"
+                  ? "text-white border-transparent shadow-sm"
+                  : "bg-white text-[#52525B] border-[#E4E4E7] hover:border-[#7B9E87] hover:text-[#7B9E87]"
               )}
+              style={activeInterest === i ? { background: "linear-gradient(135deg, #7B9E87, #43D09F)", border: "none" } : {}}
             >
               {i}
             </button>
           ))}
         </div>
 
-        {/* Results count */}
-        <p className="text-xs text-[#B0ABA3] mb-4">{filtered.length} people</p>
+        <p className="text-xs text-[#A1A1AA] mb-4 font-medium">{filtered.length} people</p>
 
         {/* Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((user) => {
             const profColor = getProfessionColor(user.profession);
+            const avail = AVAIL_STYLE[user.availability] ?? AVAIL_STYLE["Just Browsing"];
             return (
               <Link key={user.id} href={`/profile/${user.id}`}>
-                <div className="bg-white rounded-2xl border border-[#E8E4DC] p-4 hover-lift cursor-pointer">
+                <div className="bg-white rounded-3xl border border-[#F0EDE6] p-4 hover-lift cursor-pointer group">
                   {/* Avatar + name */}
                   <div className="flex items-start gap-3 mb-3">
-                    <div className="relative">
-                      <div
-                        className={cn(
-                          "w-11 h-11 rounded-full flex items-center justify-center text-white font-semibold text-sm shrink-0",
-                          getAvatarColor(user.name),
-                          user.streakCount >= 7 ? "streak-glow" : ""
-                        )}
-                      >
-                        {getInitials(user.name)}
+                    <div className="relative shrink-0">
+                      <div style={{
+                        width: 48, height: 48,
+                        borderRadius: "50%",
+                        overflow: "hidden",
+                        border: "2.5px solid white",
+                        boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+                      }}>
+                        <Avatar size={48} name={user.name} variant="beam" colors={AVATAR_PALETTE} />
                       </div>
                       {user.streakCount >= 7 && (
-                        <span className="absolute -bottom-0.5 -right-0.5 text-xs">🔥</span>
+                        <span className="absolute -bottom-0.5 -right-0.5 text-xs leading-none">🔥</span>
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 pt-0.5">
                       <div className="flex items-center gap-1.5">
-                        <p className="font-semibold text-[#1A1A1A] text-sm truncate">{user.name}</p>
+                        <p className="font-bold text-[#18181B] text-sm truncate">{user.name}</p>
                         {user.badges[0] && <span className="text-xs">{user.badges[0].emoji}</span>}
                       </div>
-                      <span
-                        className="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
-                        style={{ backgroundColor: profColor + "20", color: profColor }}
-                      >
-                        {user.profession}
-                      </span>
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        <span
+                          className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                          style={{ backgroundColor: profColor + "1A", color: profColor }}
+                        >
+                          {user.profession}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
                   {/* Location */}
-                  <div className="flex items-center gap-1 text-[#737373] mb-2">
+                  <div className="flex items-center gap-1 text-[#71717A] mb-2.5">
                     <MapPin size={11} />
                     <span className="text-xs">{user.neighborhood}, {user.city === "San Francisco" ? "SF" : "Oakland"}</span>
                   </div>
 
                   {/* Currently into */}
-                  <div className="bg-[#F5F0E8] rounded-xl px-2.5 py-2 mb-3">
-                    <p className="text-[10px] font-semibold text-[#B0ABA3] uppercase tracking-wide">Currently into</p>
+                  <div
+                    className="rounded-2xl px-3 py-2 mb-3"
+                    style={{ background: "linear-gradient(135deg, #FFF7ED, #FDF8F0)" }}
+                  >
+                    <p className="text-[9px] font-bold text-[#E8734A] uppercase tracking-widest">✨ Currently into</p>
                     <p className="text-xs text-[#3D3D3D] line-clamp-2 mt-0.5">{user.currentlyInto}</p>
                   </div>
 
                   {/* Interests */}
                   <div className="flex flex-wrap gap-1 mb-3">
-                    {user.interests.slice(0, 3).map((interest) => (
-                      <span key={interest} className="text-[10px] bg-[#F0EDE6] text-[#5A5450] px-2 py-0.5 rounded-full">
+                    {user.interests.slice(0, 3).map((interest, idx) => (
+                      <span
+                        key={interest}
+                        className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                        style={{
+                          background: ["#FFF1EC", "#EEF8F4", "#F0EEFF"][idx % 3],
+                          color: ["#C4572A", "#2A7A5A", "#6B4EC4"][idx % 3],
+                        }}
+                      >
                         {interest}
                       </span>
                     ))}
                   </div>
 
                   {/* Footer */}
-                  <div className="flex items-center justify-between pt-2 border-t border-[#F0EDE6]">
+                  <div className="flex items-center justify-between pt-2.5 border-t border-[#F4F4F5]">
                     <div className="flex items-center gap-1">
-                      <Star size={11} className="text-[#E8734A]" fill="#E8734A" />
-                      <span className="text-xs font-semibold text-[#1A1A1A]">{user.communityScore.total}</span>
+                      <span className="text-sm">⭐</span>
+                      <span className="text-xs font-bold text-[#18181B]">{user.communityScore.total}</span>
                     </div>
                     {user.streakCount > 0 && (
-                      <div className="flex items-center gap-1">
-                        <Flame size={11} className="text-[#E8734A]" />
-                        <span className="text-xs text-[#737373]">{user.streakCount}d</span>
+                      <div className="flex items-center gap-0.5">
+                        <span className="text-sm">🔥</span>
+                        <span className="text-xs text-[#71717A]">{user.streakCount}d</span>
                       </div>
                     )}
                     <span
-                      className="text-[10px] font-medium"
-                      style={{ color: user.availability === "Open to Meet" ? "#7B9E87" : "#B0ABA3" }}
+                      className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                      style={{ backgroundColor: avail.bg, color: avail.color }}
                     >
                       {user.availability}
                     </span>

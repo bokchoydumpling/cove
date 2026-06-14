@@ -31,18 +31,18 @@ export default function EventsPage() {
     <AppShell>
       <div className="max-w-4xl mx-auto px-6 py-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-[#1A1A1A]">Events</h1>
-          <p className="text-[#737373] text-sm mt-1">{events.length} events happening near you</p>
+          <h1 className="text-2xl font-bold text-[#18181B]">Events 🎉</h1>
+          <p className="text-[#71717A] text-sm mt-1">{events.length} events happening near you</p>
         </div>
 
         <div className="relative mb-4">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#B0ABA3]" />
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A1A1AA]" />
           <input
             type="text"
             placeholder="Search events…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 bg-white border border-[#E8E4DC] rounded-xl text-sm placeholder-[#B0ABA3] focus:outline-none focus:ring-2 focus:ring-[#E8734A]/30 focus:border-[#E8734A]"
+            className="w-full pl-10 pr-4 py-3 bg-white border border-[#E4E4E7] rounded-2xl text-sm placeholder-[#A1A1AA] focus:outline-none focus:ring-2 focus:ring-[#E8734A]/25 focus:border-[#E8734A] transition-all"
           />
         </div>
 
@@ -53,8 +53,10 @@ export default function EventsPage() {
               key={c}
               onClick={() => setCity(c)}
               className={cn(
-                "px-3 py-1.5 rounded-full text-xs font-medium border transition-all",
-                city === c ? "bg-[#1A1A1A] text-white border-[#1A1A1A]" : "bg-white text-[#4A4A4A] border-[#E8E4DC] hover:border-[#1A1A1A]"
+                "px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all",
+                city === c
+                  ? "bg-[#18181B] text-white border-[#18181B]"
+                  : "bg-white text-[#52525B] border-[#E4E4E7] hover:border-[#18181B]"
               )}
             >
               {c}
@@ -69,9 +71,12 @@ export default function EventsPage() {
               key={cat}
               onClick={() => setCategory(category === cat ? null : cat)}
               className={cn(
-                "shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-all",
-                category === cat ? "bg-[#E8734A] text-white border-[#E8734A]" : "bg-white text-[#4A4A4A] border-[#E8E4DC] hover:border-[#E8734A]"
+                "shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all",
+                category === cat
+                  ? "text-white border-transparent shadow-sm"
+                  : "bg-white text-[#52525B] border-[#E4E4E7] hover:border-[#E8734A] hover:text-[#E8734A]"
               )}
+              style={category === cat ? { background: "linear-gradient(135deg, #E8734A, #F4A574)" } : {}}
             >
               {cat}
             </button>
@@ -119,7 +124,7 @@ function EventCard({ event, featured = false }: { event: Event; featured?: boole
 
   return (
     <Link href={`/events/${event.id}`}>
-      <div className={cn("bg-white rounded-2xl border overflow-hidden hover-lift cursor-pointer", featured ? "border-[#E8734A]/40" : "border-[#E8E4DC]")}>
+      <div className={cn("bg-white rounded-3xl border overflow-hidden hover-lift cursor-pointer", featured ? "border-[#E8734A]/40" : "border-[#F0EDE6]")}>
         <div className="relative h-32 bg-cover bg-center" style={{ backgroundImage: `url(${event.coverImage})` }}>
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           {featured && (
