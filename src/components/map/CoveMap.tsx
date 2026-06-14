@@ -114,55 +114,54 @@ export default function CoveMap({ users, filterFn }: Props) {
     if (!containerRef.current) return;
     const el: HTMLDivElement = containerRef.current;
 
-    let dragging = false;
+    // Pending start: set on pointerdown, cleared on up/cancel
+    let pending: { x: number; y: number; lng: number; lat: number; zoom: number; pid: number } | null = null;
+    let dragging = false; // true only after confirmed motion
     let moved = false;
-    let startX = 0;
-    let startY = 0;
-    let startLng = 0;
-    let startLat = 0;
-    let startZoom = DEFAULT.zoom;
-    let capturedId = -1;
 
     function onDown(e: PointerEvent) {
       if (e.button !== 0) return;
-      e.preventDefault();
-      dragging = true;
+      // Don't preventDefault here — lets button clicks reach their handlers
+      pending = {
+        x: e.clientX, y: e.clientY,
+        lng: viewRef.current.lng, lat: viewRef.current.lat,
+        zoom: viewRef.current.zoom, pid: e.pointerId,
+      };
       moved = false;
-      startX = e.clientX;
-      startY = e.clientY;
-      startLng = viewRef.current.lng;
-      startLat = viewRef.current.lat;
-      startZoom = viewRef.current.zoom;
-      capturedId = e.pointerId;
-      el.setPointerCapture(e.pointerId);
-      setIsDragging(true);
     }
 
     function onMove(e: PointerEvent) {
-      if (!dragging || e.pointerId !== capturedId) return;
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
-      const z = startZoom;
+      if (!pending || e.pointerId !== pending.pid) return;
+      const dx = e.clientX - pending.x;
+      const dy = e.clientY - pending.y;
+      if (!dragging && Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
+      // First confirmed move: capture pointer and enter drag mode
+      if (!dragging) {
+        el.setPointerCapture(e.pointerId);
+        dragging = true;
+        setIsDragging(true);
+      }
+      moved = true;
+      const z = pending.zoom;
       setView((v) => ({
         zoom: v.zoom,
-        lng: toLng(wx(startLng, z) - dx, z),
-        lat: toLat(wy(startLat, z) - dy, z),
+        lng: toLng(wx(pending!.lng, z) - dx, z),
+        lat: toLat(wy(pending!.lat, z) - dy, z),
       }));
     }
 
     function onUp() {
       if (moved) {
-        // Suppress the click that follows a drag so markers don't accidentally select
+        // Suppress the accidental click that fires right after releasing a drag
         el.addEventListener(
           "click",
           (ev) => { ev.stopPropagation(); },
           { capture: true, once: true }
         );
       }
+      pending = null;
       dragging = false;
       moved = false;
-      capturedId = -1;
       setIsDragging(false);
     }
 
