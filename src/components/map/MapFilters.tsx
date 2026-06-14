@@ -1,6 +1,6 @@
 "use client";
-import { useState } from "react";
-import { Filter, X, ChevronDown } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { ChevronDown, X, Check } from "lucide-react";
 import { useAppStore } from "@/store/useAppStore";
 import { cn } from "@/lib/utils";
 import type { Profession, Interest, LookingFor, Availability } from "@/lib/types";
@@ -11,7 +11,7 @@ const PROFESSIONS: Profession[] = [
 ];
 const INTERESTS: Interest[] = [
   "AI","Startups","Coffee","Fitness","Books","Fashion","Photography",
-  "Music","Volunteering","Hiking","Food","Local Events","Art","Film","Sustainability",
+  "Music","Volunteering","Hiking","Food","Local Events",
 ];
 const LOOKING_FOR: LookingFor[] = [
   "Friends","Collaborators","Community","Creative Feedback","Mentorship","Coffee Chats","Project Partners",
@@ -19,155 +19,120 @@ const LOOKING_FOR: LookingFor[] = [
 const AVAILABILITY: Availability[] = [
   "Open to Meet","Open to Chat","Attending Events","Exploring","Just Browsing",
 ];
-const DISTANCES = ["Same Neighborhood","1 Mile","5 Miles","Entire City"];
 
-function FilterChip<T extends string>({
-  label, selected, onToggle,
-}: { label: T; selected: boolean; onToggle: () => void }) {
-  return (
-    <button
-      onClick={onToggle}
-      className={cn(
-        "px-3 py-1.5 rounded-full text-xs font-medium border transition-all whitespace-nowrap",
-        selected
-          ? "bg-[#E8734A] text-white border-[#E8734A]"
-          : "bg-white text-[#4A4A4A] border-[#E8E4DC] hover:border-[#E8734A] hover:text-[#E8734A]"
-      )}
-    >
-      {label}
-    </button>
-  );
-}
+type Category = "professions" | "interests" | "lookingFor" | "availability";
+
+const CATEGORIES: { key: Category; label: string; options: string[] }[] = [
+  { key: "professions", label: "Profession", options: PROFESSIONS },
+  { key: "interests",   label: "Interests",  options: INTERESTS },
+  { key: "lookingFor",  label: "Looking For", options: LOOKING_FOR },
+  { key: "availability",label: "Availability", options: AVAILABILITY },
+];
 
 export default function MapFilters() {
   const { mapFilter, setMapFilter } = useAppStore();
-  const [open, setOpen] = useState(false);
+  const [openCategory, setOpenCategory] = useState<Category | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const activeCount =
     mapFilter.professions.length +
     mapFilter.interests.length +
     mapFilter.lookingFor.length +
-    mapFilter.availability.length +
-    (mapFilter.distance !== "Entire City" ? 1 : 0);
+    mapFilter.availability.length;
 
-  const toggle = <T extends string>(key: keyof typeof mapFilter, val: T) => {
-    const current = mapFilter[key] as T[];
-    const next = current.includes(val)
-      ? current.filter((v) => v !== val)
-      : [...current, val];
+  const toggle = (key: Category, val: string) => {
+    const current = mapFilter[key] as string[];
+    const next = current.includes(val) ? current.filter((v) => v !== val) : [...current, val];
     setMapFilter({ [key]: next });
   };
 
-  const clear = () =>
+  const clearAll = () =>
     setMapFilter({ professions: [], interests: [], lookingFor: [], availability: [], distance: "Entire City" });
 
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        className={cn(
-          "flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-all shadow-sm",
-          open || activeCount > 0
-            ? "bg-[#E8734A] text-white border-[#E8734A]"
-            : "bg-white text-[#3D3D3D] border-[#E8E4DC] hover:border-[#E8734A]"
-        )}
-      >
-        <Filter size={14} />
-        Filters
-        {activeCount > 0 && (
-          <span className="bg-white text-[#E8734A] text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
-            {activeCount}
-          </span>
-        )}
-        <ChevronDown size={14} className={cn("transition-transform", open ? "rotate-180" : "")} />
-      </button>
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!openCategory) return;
+    function onOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpenCategory(null);
+      }
+    }
+    document.addEventListener("mousedown", onOutside);
+    return () => document.removeEventListener("mousedown", onOutside);
+  }, [openCategory]);
 
-      {open && (
-        <div className="absolute top-full left-0 mt-2 w-[480px] max-w-[calc(100vw-2rem)] bg-white rounded-2xl border border-[#E8E4DC] shadow-xl z-50 p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-[#1A1A1A]">Filter People</h3>
-            <div className="flex gap-2">
-              {activeCount > 0 && (
-                <button
-                  onClick={clear}
-                  className="text-xs text-[#E8734A] font-medium hover:underline"
-                >
-                  Clear all
-                </button>
+  return (
+    <div ref={containerRef} className="flex items-center gap-2">
+      {CATEGORIES.map(({ key, label, options }) => {
+        const selected = mapFilter[key] as string[];
+        const isActive = selected.length > 0;
+        const isOpen = openCategory === key;
+
+        return (
+          <div key={key} className="relative shrink-0">
+            <button
+              onClick={() => setOpenCategory(isOpen ? null : key)}
+              className={cn(
+                "flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold border transition-all whitespace-nowrap shadow-sm",
+                isActive || isOpen
+                  ? "bg-[#E8734A] text-white border-[#E8734A]"
+                  : "bg-white/90 text-[#3D3D3D] border-[#E8E4DC] hover:border-[#E8734A] hover:text-[#E8734A] backdrop-blur-sm"
               )}
-              <button onClick={() => setOpen(false)}>
-                <X size={16} className="text-[#737373]" />
-              </button>
-            </div>
+            >
+              {label}
+              {isActive && (
+                <span className="bg-white/30 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
+                  {selected.length}
+                </span>
+              )}
+              <ChevronDown size={11} className={cn("transition-transform", isOpen && "rotate-180")} />
+            </button>
+
+            {isOpen && (
+              <div className="absolute top-full left-0 mt-2 bg-white rounded-2xl border border-[#E8E4DC] shadow-xl z-50 p-3 min-w-[200px] max-w-[280px]">
+                <div className="flex flex-wrap gap-1.5">
+                  {options.map((opt) => {
+                    const on = selected.includes(opt);
+                    return (
+                      <button
+                        key={opt}
+                        onClick={() => toggle(key, opt)}
+                        className={cn(
+                          "flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all",
+                          on
+                            ? "bg-[#E8734A] text-white border-[#E8734A]"
+                            : "bg-white text-[#4A4A4A] border-[#E8E4DC] hover:border-[#E8734A] hover:text-[#E8734A]"
+                        )}
+                      >
+                        {on && <Check size={9} strokeWidth={3} />}
+                        {opt}
+                      </button>
+                    );
+                  })}
+                </div>
+                {selected.length > 0 && (
+                  <button
+                    onClick={() => setMapFilter({ [key]: [] })}
+                    className="mt-2 text-[10px] text-[#E8734A] font-medium hover:underline"
+                  >
+                    Clear {label.toLowerCase()}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
+        );
+      })}
 
-          <div className="space-y-4">
-            <Section label="Profession">
-              {PROFESSIONS.map((p) => (
-                <FilterChip
-                  key={p}
-                  label={p}
-                  selected={mapFilter.professions.includes(p)}
-                  onToggle={() => toggle("professions", p)}
-                />
-              ))}
-            </Section>
-
-            <Section label="Interests">
-              {INTERESTS.map((i) => (
-                <FilterChip
-                  key={i}
-                  label={i}
-                  selected={mapFilter.interests.includes(i)}
-                  onToggle={() => toggle("interests", i)}
-                />
-              ))}
-            </Section>
-
-            <Section label="Looking For">
-              {LOOKING_FOR.map((l) => (
-                <FilterChip
-                  key={l}
-                  label={l}
-                  selected={mapFilter.lookingFor.includes(l)}
-                  onToggle={() => toggle("lookingFor", l)}
-                />
-              ))}
-            </Section>
-
-            <Section label="Availability">
-              {AVAILABILITY.map((a) => (
-                <FilterChip
-                  key={a}
-                  label={a}
-                  selected={mapFilter.availability.includes(a)}
-                  onToggle={() => toggle("availability", a)}
-                />
-              ))}
-            </Section>
-
-            <Section label="Distance">
-              {DISTANCES.map((d) => (
-                <FilterChip
-                  key={d}
-                  label={d as Availability}
-                  selected={mapFilter.distance === d}
-                  onToggle={() => setMapFilter({ distance: d })}
-                />
-              ))}
-            </Section>
-          </div>
-        </div>
+      {activeCount > 0 && (
+        <button
+          onClick={clearAll}
+          className="shrink-0 flex items-center gap-1 px-3 py-2 rounded-full text-xs font-medium text-[#737373] hover:text-[#E8734A] bg-white/80 backdrop-blur-sm border border-[#E8E4DC] transition-colors whitespace-nowrap shadow-sm"
+        >
+          <X size={11} />
+          Clear all
+        </button>
       )}
-    </div>
-  );
-}
-
-function Section({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <p className="text-[10px] font-semibold text-[#B0ABA3] uppercase tracking-wider mb-2">{label}</p>
-      <div className="flex flex-wrap gap-1.5">{children}</div>
     </div>
   );
 }

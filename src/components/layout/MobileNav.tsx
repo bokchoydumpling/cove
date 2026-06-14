@@ -16,28 +16,30 @@ const NAV = [
 export default function MobileNav() {
   const pathname = usePathname();
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-[#F0EDE6] flex z-40 md:hidden pb-safe">
-      {NAV.map(({ href, label, icon: Icon }) => {
-        const active = pathname === href || pathname.startsWith(href + "/");
-        return (
-          <Link
-            key={href}
-            href={href}
-            className={cn(
-              "flex-1 flex flex-col items-center py-2.5 gap-0.5 text-[10px] font-semibold transition-all",
-              active ? "text-[#E8734A]" : "text-[#A1A1AA]"
-            )}
-          >
-            <div className={cn(
-              "flex items-center justify-center w-8 h-5 rounded-full transition-all",
-              active && "bg-[#FFF1EC]"
-            )}>
-              <Icon size={18} strokeWidth={active ? 2.5 : 1.8} />
-            </div>
-            {label}
-          </Link>
-        );
-      })}
+    <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-[#F0EDE6] z-40 pb-safe">
+      <div className="flex max-w-2xl mx-auto">
+        {NAV.map(({ href, label, icon: Icon }) => {
+          const active = pathname === href || pathname.startsWith(href + "/");
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                "flex-1 flex flex-col items-center py-2.5 gap-0.5 text-[10px] font-semibold transition-all",
+                active ? "text-[#E8734A]" : "text-[#A1A1AA]"
+              )}
+            >
+              <div className={cn(
+                "flex items-center justify-center w-8 h-5 rounded-full transition-all",
+                active && "bg-[#FFF1EC]"
+              )}>
+                <Icon size={18} strokeWidth={active ? 2.5 : 1.8} />
+              </div>
+              {label}
+            </Link>
+          );
+        })}
+      </div>
     </nav>
   );
 }

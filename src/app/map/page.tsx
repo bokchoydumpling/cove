@@ -21,11 +21,13 @@ export default function MapPage() {
   return (
     <AppShell>
       <div className="relative h-screen overflow-hidden">
-        {/* Top bar */}
-        <div className="absolute top-4 left-4 right-4 z-20 flex items-center gap-3">
-          <MapFilters />
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl px-3 py-2 border border-[#E8E4DC] text-xs text-[#737373] shadow-sm">
-            <span className="font-semibold text-[#1A1A1A]">{visibleCount}</span> people nearby
+        {/* Top filter bar */}
+        <div className="absolute top-4 left-4 right-4 z-20 flex items-center gap-2">
+          <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide">
+            <MapFilters />
+          </div>
+          <div className="shrink-0 bg-white/90 backdrop-blur-sm rounded-full px-3 py-2 border border-[#E8E4DC] text-xs text-[#737373] shadow-sm whitespace-nowrap">
+            <span className="font-semibold text-[#1A1A1A]">{visibleCount}</span> nearby
           </div>
         </div>
 

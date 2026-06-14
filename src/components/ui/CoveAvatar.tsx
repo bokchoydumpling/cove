@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function CoveAvatar({ name, size, className }: Props) {
-  const url = `https://api.dicebear.com/7.x/open-peeps/svg?seed=${encodeURIComponent(name)}&backgroundColor=${BG}`;
+  const url = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name)}&backgroundColor=${BG}`;
   return (
     <img
       src={url}

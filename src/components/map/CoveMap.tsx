@@ -261,11 +261,10 @@ export default function CoveMap({ users, filterFn }: Props) {
         </span>
       ))}
 
-      {/* User markers — full-body open-peeps characters standing at their location */}
+      {/* User markers — adventurer portrait in circular frame */}
       {markerPositions.map(({ user, x, y, ox, oy }) => {
         const px = x + ox;
         const py = y + oy;
-        // Cull: character body extends ~76% of ~75px above the coordinate = ~57px up
         if (px < -80 || px > size.w + 80 || py < -100 || py > size.h + 40) return null;
         const isSelected = selectedUser?.id === user.id;
         return (
@@ -275,8 +274,7 @@ export default function CoveMap({ users, filterFn }: Props) {
             style={{
               left: px,
               top: py,
-              // Feet sit at the coordinate; body stands above, name label below
-              transform: "translate(-50%, -76%)",
+              transform: "translate(-50%, -85%)",
               zIndex: isSelected ? 30 : 10,
               pointerEvents: "auto",
               display: "flex",
@@ -291,16 +289,26 @@ export default function CoveMap({ users, filterFn }: Props) {
               setSelectedUser((p) => (p?.id === user.id ? null : user));
             }}
           >
-            {/* Full-body standing character — no circle crop */}
-            <img
-              src={`https://api.dicebear.com/7.x/open-peeps/svg?seed=${encodeURIComponent(user.name)}&backgroundColor=transparent`}
-              width={56}
-              height={56}
-              alt=""
-              draggable={false}
-              style={{ display: "block", pointerEvents: "none", userSelect: "none" }}
-            />
-            {/* Name + availability pill at feet level */}
+            {/* Circular adventurer avatar */}
+            <div style={{
+              width: 48,
+              height: 48,
+              borderRadius: "50%",
+              overflow: "hidden",
+              border: `2.5px solid ${isSelected ? "#E8734A" : "white"}`,
+              boxShadow: isSelected ? "0 0 0 2px #E8734A40" : "0 2px 8px rgba(0,0,0,0.18)",
+              flexShrink: 0,
+            }}>
+              <img
+                src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(user.name)}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`}
+                width={48}
+                height={48}
+                alt=""
+                draggable={false}
+                style={{ display: "block", pointerEvents: "none", userSelect: "none" }}
+              />
+            </div>
+            {/* Name label */}
             <div
               style={{
                 fontSize: 9,
@@ -311,7 +319,7 @@ export default function CoveMap({ users, filterFn }: Props) {
                 border: `1.5px solid ${isSelected ? "#E8734A" : "rgba(0,0,0,0.07)"}`,
                 borderRadius: 6,
                 padding: "2px 6px",
-                marginTop: 1,
+                marginTop: 2,
                 boxShadow: "0 1px 5px rgba(0,0,0,0.12)",
                 whiteSpace: "nowrap",
                 pointerEvents: "none",
