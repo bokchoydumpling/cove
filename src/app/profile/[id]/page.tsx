@@ -8,7 +8,7 @@ import CommunityScoreCard from "@/components/profile/CommunityScoreCard";
 import BadgeList from "@/components/profile/BadgeList";
 import ShowcaseCarousel from "@/components/profile/ShowcaseCarousel";
 import VouchSection from "@/components/profile/VouchSection";
-import { cn, getProfessionColor, formatRelativeTime } from "@/lib/utils";
+import { cn, getProfessionColor, formatRelativeTime, getInterestColors } from "@/lib/utils";
 import CoveAvatar from "@/components/ui/CoveAvatar";
 
 export default function UserProfilePage({ params }: { params: Promise<{ id: string }> }) {
@@ -135,7 +135,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ id: stri
               <h3 className="text-sm font-medium text-[#2F2A26] mb-3">Interests</h3>
               <div className="flex flex-wrap gap-1.5 mb-4">
                 {user.interests.map((i) => (
-                  <span key={i} className="text-xs bg-[#EDE7DF] text-[#6E6A65] px-2.5 py-1 rounded-full font-medium">{i}</span>
+                  <span key={i} className="interest-tag text-xs px-2.5 py-1 rounded-full font-medium" style={getInterestColors(i)}>{i}</span>
                 ))}
               </div>
               {user.lookingFor.length > 0 && (

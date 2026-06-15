@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { X, MapPin, MessageCircle, ExternalLink } from "lucide-react";
 import type { User } from "@/lib/types";
-import { cn, getProfessionColor, formatRelativeTime } from "@/lib/utils";
+import { cn, getProfessionColor, formatRelativeTime, getInterestColors } from "@/lib/utils";
 import CoveAvatar from "@/components/ui/CoveAvatar";
 
 interface ProfileCardProps {
@@ -12,148 +12,174 @@ interface ProfileCardProps {
 }
 
 const AVAILABILITY_CONFIG: Record<string, { color: string; bg: string; emoji: string }> = {
-  "Open to Meet":    { color: "#1A7A5A", bg: "#D1FAE5", emoji: "🟢" },
-  "Open to Chat":    { color: "#1D5FAA", bg: "#DBEAFE", emoji: "💬" },
-  "Attending Events":{ color: "#6B21A8", bg: "#F3E8FF", emoji: "🎉" },
-  "Exploring":       { color: "#92400E", bg: "#FEF3C7", emoji: "🔍" },
-  "Just Browsing":   { color: "#2F2A26", bg: "#F3F4F6", emoji: "👀" },
+  "Open to Meet":     { color: "#1A7A5A", bg: "#D1FAE5", emoji: "🟢" },
+  "Open to Chat":     { color: "#1D5FAA", bg: "#DBEAFE", emoji: "💬" },
+  "Attending Events": { color: "#6B21A8", bg: "#F3E8FF", emoji: "🎉" },
+  "Exploring":        { color: "#92400E", bg: "#FEF3C7", emoji: "🔍" },
+  "Just Browsing":    { color: "#2F2A26", bg: "#F3F4F6", emoji: "👀" },
 };
 
 export default function ProfileCard({ user, onClose, compact = false }: ProfileCardProps) {
   const profColor = getProfessionColor(user.profession);
   const avail = AVAILABILITY_CONFIG[user.availability] ?? AVAILABILITY_CONFIG["Just Browsing"];
+  const heroItem = user.showcaseItems?.[0];
 
   return (
     <div className={cn(
-      "bg-white rounded-3xl shadow-2xl overflow-hidden border border-black/5",
+      "bg-[#FFFDFC] rounded-3xl shadow-2xl overflow-hidden border border-black/5",
       compact ? "w-72" : "w-80"
-    )}>
-      {/* Warm gradient header */}
-      <div
-        className="relative px-5 pt-5 pb-4"
-        style={{ background: "linear-gradient(135deg, #FFF0EE 0%, #FDF8F0 50%, #EEF8F4 100%)" }}
-      >
+    )}
+    style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.16), 0 4px 16px rgba(0,0,0,0.08)" }}
+    >
+      {/* ── Hero — showcase cover or gradient ─────────────────────────── */}
+      <div className="relative h-32 overflow-hidden">
+        {heroItem ? (
+          <>
+            <img
+              src={heroItem.coverImage}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover"
+              draggable={false}
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-transparent to-black/55" />
+          </>
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(135deg, ${profColor}30 0%, ${profColor}14 55%, #F2EDE4 100%)`,
+            }}
+          />
+        )}
+
+        {/* Availability pill — top left */}
+        <div className="absolute top-3 left-3">
+          <span
+            className="text-[10px] font-medium px-2 py-0.5 rounded-full backdrop-blur-sm"
+            style={{ backgroundColor: avail.bg + "D8", color: avail.color }}
+          >
+            {avail.emoji} {user.availability}
+          </span>
+        </div>
+
+        {/* Close — top right */}
         {onClose && (
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 w-7 h-7 rounded-full bg-black/8 flex items-center justify-center text-[#6E6A65] hover:text-[#2F2A26] hover:bg-black/12 transition-all"
+            className="absolute top-3 right-3 w-7 h-7 rounded-full bg-black/25 backdrop-blur-sm flex items-center justify-center text-white/90 hover:bg-black/40 transition-all"
           >
-            <X size={14} />
+            <X size={13} />
           </button>
         )}
 
-        <div className="flex items-start gap-3.5">
-          {/* Avatar */}
-          <div className="relative shrink-0">
-            <div style={{
-              width: 56, height: 56,
-              borderRadius: "50%",
-              overflow: "hidden",
-              border: "3px solid white",
-              boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
-            }}>
-              <CoveAvatar src={user.avatar} name={user.name} size={56} />
-            </div>
-            {user.streakCount >= 7 && (
-              <span className="absolute -bottom-1 -right-1 text-sm leading-none">🔥</span>
-            )}
+        {/* Avatar half-overlapping the bottom edge */}
+        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2">
+          <div
+            className="w-[60px] h-[60px] rounded-full overflow-hidden border-[3px] border-[#FFFDFC] avatar-bounce"
+            style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.20)" }}
+          >
+            <CoveAvatar src={user.avatar} name={user.name} size={60} />
           </div>
-
-          {/* Name + role */}
-          <div className="flex-1 min-w-0 pt-0.5">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <h3 className="font-semibold text-[#2F2A26] text-base leading-tight truncate">{user.name}</h3>
-              {user.badges.length > 0 && (
-                <span className="text-sm leading-none">{user.badges[0].emoji}</span>
-              )}
-            </div>
-            <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-              <span
-                className="text-[11px] font-medium px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: profColor + "1A", color: profColor }}
-              >
-                {user.profession}
-              </span>
-              <span
-                className="text-[11px] font-medium px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: avail.bg, color: avail.color }}
-              >
-                {avail.emoji} {user.availability}
-              </span>
-            </div>
-            <div className="flex items-center gap-1 mt-1.5 text-[#6E6A65]">
-              <MapPin size={11} />
-              <span className="text-[11px]">{user.neighborhood}</span>
-            </div>
-          </div>
+          {user.streakCount >= 7 && (
+            <span className="absolute -bottom-0.5 -right-0.5 text-sm leading-none select-none">🔥</span>
+          )}
         </div>
       </div>
 
-      {/* Body */}
-      <div className="px-5 py-4 space-y-3">
-        {/* Currently into */}
-        <div
-          className="rounded-2xl px-3.5 py-2.5"
-          style={{ background: "linear-gradient(135deg, #FFF7ED, #FDF8F0)" }}
-        >
-          <p className="text-[10px] font-semibold text-[#F47A5C] uppercase tracking-widest mb-1">✨ Currently into</p>
-          <p className="text-xs text-[#2F2A26] leading-relaxed">{user.currentlyInto}</p>
+      {/* ── Body ──────────────────────────────────────────────────────── */}
+      <div className="px-4 pb-4">
+        {/* Name + badges (centered, padded below avatar) */}
+        <div className="pt-10 text-center">
+          <div className="flex items-center justify-center gap-1.5 flex-wrap">
+            <h3 className="font-semibold text-[#2F2A26] text-base leading-tight">{user.name}</h3>
+            {user.badges.slice(0, 2).map((b) => (
+              <span key={b.type} title={b.label} className="text-sm leading-none select-none">{b.emoji}</span>
+            ))}
+          </div>
+          <div className="flex items-center justify-center gap-2 mt-1.5 flex-wrap">
+            <span
+              className="text-[11px] font-medium px-2 py-0.5 rounded-full"
+              style={{ backgroundColor: profColor + "1C", color: profColor }}
+            >
+              {user.profession}
+            </span>
+          </div>
+          <div className="flex items-center justify-center gap-1 mt-1 text-[#9B9690]">
+            <MapPin size={10} />
+            <span className="text-[11px]">{user.neighborhood}</span>
+          </div>
         </div>
 
-        {/* Personality */}
-        <p className="text-xs text-[#6E6A65] italic leading-relaxed">&ldquo;{user.personalityPrompt}&rdquo;</p>
+        {/* Currently Into — hero text block */}
+        <div
+          className="mt-3 rounded-2xl px-3.5 py-2.5"
+          style={{ background: "linear-gradient(135deg, #FEEEEA 0%, #FFF9F6 100%)" }}
+        >
+          <p className="text-[10px] font-semibold text-[#F47A5C] uppercase tracking-widest mb-1">✨ Currently into</p>
+          <p className="text-xs text-[#2F2A26] leading-relaxed line-clamp-2">{user.currentlyInto}</p>
+        </div>
 
-        {/* Interest tags */}
-        <div className="flex flex-wrap gap-1.5">
-          {user.interests.slice(0, 5).map((interest, i) => (
+        {/* Interest tags — community identity colors */}
+        <div className="flex flex-wrap gap-1.5 mt-3 justify-center">
+          {user.interests.slice(0, 4).map((interest) => (
             <span
               key={interest}
-              className="text-[11px] font-medium px-2.5 py-1 rounded-full"
-              style={{
-                background: ["#FFF0EE", "#EEF8F4", "#F0EEFF", "#EEF6FF", "#FFF8EC"][i % 5],
-                color: ["#D05A3D", "#2A7A5A", "#6B4EC4", "#2A5FAA", "#AA6B00"][i % 5],
-              }}
+              className="interest-tag text-[11px] font-medium px-2.5 py-1 rounded-full"
+              style={getInterestColors(interest)}
             >
               {interest}
             </span>
           ))}
         </div>
 
+        {/* Showcase mini strip — if present */}
+        {user.showcaseItems.length > 0 && (
+          <div className="mt-3 flex gap-2">
+            {user.showcaseItems.slice(0, 2).map((item) => (
+              <div
+                key={item.id}
+                className="flex-1 rounded-xl overflow-hidden showcase-zoom-wrap"
+                style={{ height: 56 }}
+              >
+                <img
+                  src={item.coverImage}
+                  alt={item.title}
+                  className="showcase-zoom-img w-full h-full object-cover"
+                  draggable={false}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Stats row */}
-        <div className="flex items-center gap-3 py-2 border-t border-[#E9E3DB]">
-          <div className="flex items-center gap-1.5">
-            <span className="text-base">⭐</span>
-            <div>
-              <p className="text-sm font-semibold text-[#2F2A26] leading-none">{user.communityScore.total}</p>
-              <p className="text-[10px] text-[#9B9690]">points</p>
-            </div>
+        <div className="flex items-center gap-3 mt-3 pt-2.5 border-t border-[#E9E3DB]">
+          <div className="flex items-center gap-1">
+            <span className="text-sm leading-none">⭐</span>
+            <span className="text-xs font-semibold text-[#2F2A26]">{user.communityScore.total}</span>
+            <span className="text-[10px] text-[#9B9690]">pts</span>
           </div>
           {user.streakCount > 0 && (
-            <div className="flex items-center gap-1.5">
-              <span className="text-base">🔥</span>
-              <div>
-                <p className="text-sm font-semibold text-[#2F2A26] leading-none">{user.streakCount}d</p>
-                <p className="text-[10px] text-[#9B9690]">streak</p>
-              </div>
+            <div className="flex items-center gap-1">
+              <span className="text-sm leading-none">🔥</span>
+              <span className="text-xs font-semibold text-[#2F2A26]">{user.streakCount}d</span>
             </div>
           )}
-          <div className="ml-auto text-[11px] text-[#9B9690]">
-            {formatRelativeTime(user.lastActive)}
-          </div>
+          <span className="text-[10px] text-[#9B9690] ml-auto">{formatRelativeTime(user.lastActive)}</span>
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-2 pt-0.5">
+        {/* CTA buttons */}
+        <div className="flex gap-2 mt-2.5">
           <Link
             href="/messages"
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-medium transition-all bg-[#E9E3DB] text-[#2F2A26] hover:bg-[#E9E3DB]"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-medium transition-all bg-[#EDE7DF] text-[#2F2A26] hover:bg-[#E9E3DB]"
           >
             <MessageCircle size={13} />
             Message
           </Link>
           <Link
             href={`/profile/${user.id}`}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-medium transition-all text-white"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-medium text-white transition-all hover:opacity-90 active:scale-[0.98]"
             style={{ background: "linear-gradient(135deg, #F47A5C, #F4A574)" }}
           >
             <ExternalLink size={13} />

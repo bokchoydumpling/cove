@@ -194,3 +194,34 @@ body {
 .line-clamp-1 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
 .line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .line-clamp-3 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+
+/* ── Profile card: avatar bounce-in on mount ────────────────────────── */
+@keyframes avatarBounceIn {
+  0%   { transform: scale(0.80) translateY(6px); opacity: 0.6; }
+  55%  { transform: scale(1.10) translateY(-3px); opacity: 1; }
+  78%  { transform: scale(0.96) translateY(1px); }
+  100% { transform: scale(1)    translateY(0); }
+}
+.avatar-bounce {
+  animation: avatarBounceIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ── Showcase image zoom on group-hover (applied via group/group-hover) */
+.showcase-zoom-img {
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.showcase-zoom-wrap:hover .showcase-zoom-img {
+  transform: scale(1.07);
+}
+
+/* ── Interest/community tag micro-lift ──────────────────────────────── */
+.interest-tag {
+  display: inline-flex;
+  align-items: center;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease !important;
+  cursor: default;
+}
+.interest-tag:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+}
