@@ -24,6 +24,7 @@ export default function ShowcasePage({ params }: { params: Promise<{ userId: str
     user?.showcaseItems.forEach((item) => { init[item.id] = { ...item.reactions }; });
     return init;
   });
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   if (!user) return (
     <AppShell>
@@ -46,7 +47,6 @@ export default function ShowcasePage({ params }: { params: Promise<{ userId: str
   };
 
   const categories = [...new Set(user.showcaseItems.map((i) => i.category))];
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const filtered = activeCategory
     ? user.showcaseItems.filter((i) => i.category === activeCategory)
     : user.showcaseItems;

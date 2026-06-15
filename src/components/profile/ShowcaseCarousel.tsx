@@ -10,8 +10,8 @@ interface Props {
   userId: string;
 }
 
-function ReactionButton({ emoji, label, count, onReact }: {
-  emoji: string; label: string; count: number; onReact: () => void;
+function ReactionButton({ emoji, count, onReact }: {
+  emoji: string; label?: string; count: number; onReact: () => void;
 }) {
   const [clicked, setClicked] = useState(false);
   const [localCount, setLocalCount] = useState(count);
