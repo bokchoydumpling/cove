@@ -20,26 +20,26 @@ export default function Sidebar() {
   const currentUser = useAppStore((s) => s.currentUser);
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-60 bg-white/95 backdrop-blur-sm border-r border-[#F0EDE6] flex flex-col z-40">
+    <aside className="fixed left-0 top-0 h-full w-60 bg-white/95 backdrop-blur-sm border-r border-[#EDE7DF] flex flex-col z-40">
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-[#F0EDE6]">
+      <div className="px-5 py-5 border-b border-[#EDE7DF]">
         <Link href="/map" className="flex items-center gap-2.5 group">
           <div
             className="w-9 h-9 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform"
-            style={{ background: "linear-gradient(135deg, #E8734A, #F4A574)" }}
+            style={{ background: "linear-gradient(135deg, #F47A5C, #F4A574)" }}
           >
-            <span className="text-white text-base font-bold">C</span>
+            <span className="text-white text-base font-semibold">C</span>
           </div>
           <div>
             <span
-              className="font-bold text-lg tracking-tight"
-              style={{ background: "linear-gradient(135deg, #E8734A, #C8702A)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+              className="font-semibold text-lg tracking-tight"
+              style={{ background: "linear-gradient(135deg, #F47A5C, #E0674A)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
             >
               Cove
             </span>
           </div>
         </Link>
-        <p className="text-[#A1A1AA] text-[11px] mt-1 pl-0.5 font-medium">SF + Oakland 🌉</p>
+        <p className="text-[#9B9690] text-[11px] mt-1 pl-0.5 font-medium">SF + Oakland 🌉</p>
       </div>
 
       {/* Nav */}
@@ -54,17 +54,17 @@ export default function Sidebar() {
                 "flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-medium transition-all duration-150",
                 active
                   ? "text-white shadow-sm"
-                  : "text-[#52525B] hover:bg-[#F9F5F2] hover:text-[#18181B]"
+                  : "text-[#6E6A65] hover:bg-[#F2EDE4] hover:text-[#2F2A26]"
               )}
-              style={active ? { background: "linear-gradient(135deg, #E8734A, #F4A574)" } : {}}
+              style={active ? { background: "linear-gradient(135deg, #F47A5C, #F4A574)" } : {}}
             >
               <Icon size={17} strokeWidth={active ? 2.5 : 2} />
               <span>{label}</span>
               {badge && (
                 <span
                   className={cn(
-                    "ml-auto text-[10px] font-bold rounded-full w-4.5 h-4.5 flex items-center justify-center min-w-[18px] px-1",
-                    active ? "bg-white/30 text-white" : "bg-[#E8734A] text-white"
+                    "ml-auto text-[10px] font-semibold rounded-full w-4.5 h-4.5 flex items-center justify-center min-w-[18px] px-1",
+                    active ? "bg-white/30 text-white" : "bg-[#F47A5C] text-white"
                   )}
                 >
                   {badge}
@@ -80,19 +80,19 @@ export default function Sidebar() {
         className="mx-3 mb-3 p-3 rounded-2xl border"
         style={{ background: "linear-gradient(135deg, #FFF7ED, #FDF8F0)", borderColor: "#F4CFBC" }}
       >
-        <p className="text-xs font-semibold text-[#C4572A] mb-0.5">✨ Nearby this week</p>
-        <p className="text-[11px] text-[#6B4030] leading-relaxed">3 people near you are also into AI.</p>
+        <p className="text-xs font-medium text-[#D05A3D] mb-0.5">✨ Nearby this week</p>
+        <p className="text-[11px] text-[#2F2A26] leading-relaxed">3 people near you are also into AI.</p>
       </div>
 
       {/* Profile */}
-      <div className="px-3 pb-4 pt-3 border-t border-[#F0EDE6]">
+      <div className="px-3 pb-4 pt-3 border-t border-[#EDE7DF]">
         <Link
           href="/profile"
           className={cn(
             "flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all",
             pathname === "/profile"
-              ? "bg-[#FFF1EC]"
-              : "hover:bg-[#F9F5F2]"
+              ? "bg-[#FFF0EE]"
+              : "hover:bg-[#F2EDE4]"
           )}
         >
           <div style={{
@@ -106,13 +106,13 @@ export default function Sidebar() {
             <CoveAvatar src={currentUser.avatar} name={currentUser.name} size={34} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-[#18181B] truncate">{currentUser.name}</p>
-            <p className="text-[11px] text-[#A1A1AA] flex items-center gap-1">
+            <p className="text-sm font-medium text-[#2F2A26] truncate">{currentUser.name}</p>
+            <p className="text-[11px] text-[#9B9690] flex items-center gap-1">
               {currentUser.streakCount >= 7 && "🔥"}
               {currentUser.streakCount}d streak · {currentUser.communityScore.total} pts
             </p>
           </div>
-          <User size={13} className="text-[#A1A1AA] shrink-0" />
+          <User size={13} className="text-[#9B9690] shrink-0" />
         </Link>
       </div>
     </aside>

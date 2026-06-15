@@ -35,10 +35,10 @@ const typeColor: Record<string, string> = {
   new_neighbor: "bg-[#EBF5EE] text-[#3E8A54]",
   new_showcase: "bg-[#F3EFFC] text-[#6B4EC4]",
   currently_into: "bg-[#EBF0FB] text-[#3B5CC4]",
-  new_event: "bg-[#FDF0EB] text-[#B35C2E]",
+  new_event: "bg-[#FEEEEA] text-[#B35C2E]",
   vouch: "bg-[#FFF3E0] text-[#C67A1E]",
-  streak_milestone: "bg-[#FDF0EB] text-[#E8734A]",
-  event_rsvp: "bg-[#F0EDE6] text-[#5A5450]",
+  streak_milestone: "bg-[#FEEEEA] text-[#F47A5C]",
+  event_rsvp: "bg-[#EDE7DF] text-[#6E6A65]",
   new_circle: "bg-[#EBF5EE] text-[#3E8A54]",
 };
 
@@ -50,8 +50,8 @@ export default function ActivityPage() {
     <AppShell>
       <div className="max-w-2xl mx-auto px-6 py-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-[#1A1A1A]">Activity</h1>
-          <p className="text-[#737373] text-sm mt-1">Your city&apos;s pulse — what&apos;s happening nearby.</p>
+          <h1 className="text-2xl font-semibold text-[#2F2A26]">Activity</h1>
+          <p className="text-[#6E6A65] text-sm mt-1">Your city&apos;s pulse — what&apos;s happening nearby.</p>
         </div>
 
         {/* Discovery nudges */}
@@ -61,9 +61,9 @@ export default function ActivityPage() {
             { icon: "🌱", text: "A new circle launched in the Mission." },
             { icon: "📍", text: "A new event is happening 2 blocks away." },
           ].map((nudge) => (
-            <div key={nudge.icon} className="bg-white rounded-2xl border border-[#E8E4DC] p-3 text-center">
+            <div key={nudge.icon} className="bg-white rounded-2xl border border-[#E9E3DB] p-3 text-center">
               <div className="text-2xl mb-1">{nudge.icon}</div>
-              <p className="text-[11px] text-[#4A4A4A] leading-relaxed">{nudge.text}</p>
+              <p className="text-[11px] text-[#2F2A26] leading-relaxed">{nudge.text}</p>
             </div>
           ))}
         </div>
@@ -74,7 +74,7 @@ export default function ActivityPage() {
             const user = getUser(item.actorId);
             if (!user) return null;
             return (
-              <div key={item.id} className="bg-white rounded-2xl border border-[#E8E4DC] p-4 flex gap-3">
+              <div key={item.id} className="bg-white rounded-2xl border border-[#E9E3DB] p-4 flex gap-3">
                 <div className="relative shrink-0">
                   <div style={{ width: 36, height: 36, borderRadius: "50%", overflow: "hidden", border: "2px solid white", boxShadow: "0 1px 6px rgba(0,0,0,0.1)" }}>
                     <CoveAvatar src={user.avatar} name={user.name} size={36} />
@@ -83,15 +83,15 @@ export default function ActivityPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Link href={`/profile/${user.id}`} className="text-xs font-semibold text-[#1A1A1A] hover:text-[#E8734A]">
+                    <Link href={`/profile/${user.id}`} className="text-xs font-medium text-[#2F2A26] hover:text-[#F47A5C]">
                       {user.name}
                     </Link>
-                    <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded-full", typeColor[item.type] ?? "bg-[#F0EDE6] text-[#5A5450]")}>
+                    <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded-full", typeColor[item.type] ?? "bg-[#EDE7DF] text-[#6E6A65]")}>
                       {typeLabel[item.type]}
                     </span>
                   </div>
-                  <p className="text-xs text-[#4A4A4A] mt-0.5">{item.content}</p>
-                  <p className="text-[10px] text-[#B0ABA3] mt-1">{formatRelativeTime(item.time)}</p>
+                  <p className="text-xs text-[#2F2A26] mt-0.5">{item.content}</p>
+                  <p className="text-[10px] text-[#9B9690] mt-1">{formatRelativeTime(item.time)}</p>
                 </div>
               </div>
             );

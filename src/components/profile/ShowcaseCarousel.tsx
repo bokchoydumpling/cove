@@ -29,8 +29,8 @@ function ReactionButton({ emoji, label, count, onReact }: {
       onClick={handle}
       className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium border transition-all ${
         clicked
-          ? "bg-[#FDF0EB] border-[#E8734A] text-[#E8734A]"
-          : "bg-[#F5F0E8] border-transparent text-[#5A5450] hover:border-[#E8E4DC]"
+          ? "bg-[#FEEEEA] border-[#F47A5C] text-[#F47A5C]"
+          : "bg-[#F2EDE4] border-transparent text-[#6E6A65] hover:border-[#E9E3DB]"
       }`}
     >
       <span>{emoji}</span>
@@ -42,14 +42,14 @@ function ReactionButton({ emoji, label, count, onReact }: {
 
 function ShowcaseItemCard({ item }: { item: ShowcaseItem }) {
   return (
-    <div className="shrink-0 w-48 bg-white rounded-xl border border-[#E8E4DC] overflow-hidden hover-lift cursor-pointer">
+    <div className="shrink-0 w-48 bg-white rounded-xl border border-[#E9E3DB] overflow-hidden hover-lift cursor-pointer">
       <div
         className="w-full h-28 bg-cover bg-center"
         style={{ backgroundImage: `url(${item.coverImage})` }}
       />
       <div className="p-2.5">
         <span className="text-[10px] font-medium text-[#9B8EC4] uppercase tracking-wide">{item.category}</span>
-        <p className="text-xs font-semibold text-[#1A1A1A] mt-0.5 line-clamp-1">{item.title}</p>
+        <p className="text-xs font-medium text-[#2F2A26] mt-0.5 line-clamp-1">{item.title}</p>
         <div className="flex gap-1 mt-2 flex-wrap">
           <ReactionButton emoji="🔥" label="Collab" count={item.reactions.collab} onReact={() => {}} />
           <ReactionButton emoji="👏" label="Inspired" count={item.reactions.inspired} onReact={() => {}} />
@@ -62,8 +62,8 @@ function ShowcaseItemCard({ item }: { item: ShowcaseItem }) {
 export default function ShowcaseCarousel({ items, userId }: Props) {
   if (items.length === 0) {
     return (
-      <div className="bg-[#F5F0E8] rounded-2xl p-6 text-center">
-        <p className="text-sm text-[#737373]">No showcase items yet.</p>
+      <div className="bg-[#F2EDE4] rounded-2xl p-6 text-center">
+        <p className="text-sm text-[#6E6A65]">No showcase items yet.</p>
       </div>
     );
   }
@@ -71,10 +71,10 @@ export default function ShowcaseCarousel({ items, userId }: Props) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-[#1A1A1A]">Showcase</h3>
+        <h3 className="text-sm font-medium text-[#2F2A26]">Showcase</h3>
         <Link
           href={`/showcase/${userId}`}
-          className="flex items-center gap-0.5 text-xs text-[#E8734A] font-medium hover:underline"
+          className="flex items-center gap-0.5 text-xs text-[#F47A5C] font-medium hover:underline"
         >
           View all <ChevronRight size={13} />
         </Link>

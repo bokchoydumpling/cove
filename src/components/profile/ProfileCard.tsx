@@ -16,7 +16,7 @@ const AVAILABILITY_CONFIG: Record<string, { color: string; bg: string; emoji: st
   "Open to Chat":    { color: "#1D5FAA", bg: "#DBEAFE", emoji: "💬" },
   "Attending Events":{ color: "#6B21A8", bg: "#F3E8FF", emoji: "🎉" },
   "Exploring":       { color: "#92400E", bg: "#FEF3C7", emoji: "🔍" },
-  "Just Browsing":   { color: "#374151", bg: "#F3F4F6", emoji: "👀" },
+  "Just Browsing":   { color: "#2F2A26", bg: "#F3F4F6", emoji: "👀" },
 };
 
 export default function ProfileCard({ user, onClose, compact = false }: ProfileCardProps) {
@@ -31,12 +31,12 @@ export default function ProfileCard({ user, onClose, compact = false }: ProfileC
       {/* Warm gradient header */}
       <div
         className="relative px-5 pt-5 pb-4"
-        style={{ background: "linear-gradient(135deg, #FFF1EC 0%, #FDF8F0 50%, #EEF8F4 100%)" }}
+        style={{ background: "linear-gradient(135deg, #FFF0EE 0%, #FDF8F0 50%, #EEF8F4 100%)" }}
       >
         {onClose && (
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 w-7 h-7 rounded-full bg-black/8 flex items-center justify-center text-[#737373] hover:text-[#1A1A1A] hover:bg-black/12 transition-all"
+            className="absolute top-4 right-4 w-7 h-7 rounded-full bg-black/8 flex items-center justify-center text-[#6E6A65] hover:text-[#2F2A26] hover:bg-black/12 transition-all"
           >
             <X size={14} />
           </button>
@@ -62,14 +62,14 @@ export default function ProfileCard({ user, onClose, compact = false }: ProfileC
           {/* Name + role */}
           <div className="flex-1 min-w-0 pt-0.5">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <h3 className="font-bold text-[#18181B] text-base leading-tight truncate">{user.name}</h3>
+              <h3 className="font-semibold text-[#2F2A26] text-base leading-tight truncate">{user.name}</h3>
               {user.badges.length > 0 && (
                 <span className="text-sm leading-none">{user.badges[0].emoji}</span>
               )}
             </div>
             <div className="mt-1 flex items-center gap-1.5 flex-wrap">
               <span
-                className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                className="text-[11px] font-medium px-2 py-0.5 rounded-full"
                 style={{ backgroundColor: profColor + "1A", color: profColor }}
               >
                 {user.profession}
@@ -81,7 +81,7 @@ export default function ProfileCard({ user, onClose, compact = false }: ProfileC
                 {avail.emoji} {user.availability}
               </span>
             </div>
-            <div className="flex items-center gap-1 mt-1.5 text-[#71717A]">
+            <div className="flex items-center gap-1 mt-1.5 text-[#6E6A65]">
               <MapPin size={11} />
               <span className="text-[11px]">{user.neighborhood}</span>
             </div>
@@ -96,12 +96,12 @@ export default function ProfileCard({ user, onClose, compact = false }: ProfileC
           className="rounded-2xl px-3.5 py-2.5"
           style={{ background: "linear-gradient(135deg, #FFF7ED, #FDF8F0)" }}
         >
-          <p className="text-[10px] font-bold text-[#E8734A] uppercase tracking-widest mb-1">✨ Currently into</p>
-          <p className="text-xs text-[#3D3D3D] leading-relaxed">{user.currentlyInto}</p>
+          <p className="text-[10px] font-semibold text-[#F47A5C] uppercase tracking-widest mb-1">✨ Currently into</p>
+          <p className="text-xs text-[#2F2A26] leading-relaxed">{user.currentlyInto}</p>
         </div>
 
         {/* Personality */}
-        <p className="text-xs text-[#71717A] italic leading-relaxed">&ldquo;{user.personalityPrompt}&rdquo;</p>
+        <p className="text-xs text-[#6E6A65] italic leading-relaxed">&ldquo;{user.personalityPrompt}&rdquo;</p>
 
         {/* Interest tags */}
         <div className="flex flex-wrap gap-1.5">
@@ -110,8 +110,8 @@ export default function ProfileCard({ user, onClose, compact = false }: ProfileC
               key={interest}
               className="text-[11px] font-medium px-2.5 py-1 rounded-full"
               style={{
-                background: ["#FFF1EC", "#EEF8F4", "#F0EEFF", "#EEF6FF", "#FFF8EC"][i % 5],
-                color: ["#C4572A", "#2A7A5A", "#6B4EC4", "#2A5FAA", "#AA6B00"][i % 5],
+                background: ["#FFF0EE", "#EEF8F4", "#F0EEFF", "#EEF6FF", "#FFF8EC"][i % 5],
+                color: ["#D05A3D", "#2A7A5A", "#6B4EC4", "#2A5FAA", "#AA6B00"][i % 5],
               }}
             >
               {interest}
@@ -120,24 +120,24 @@ export default function ProfileCard({ user, onClose, compact = false }: ProfileC
         </div>
 
         {/* Stats row */}
-        <div className="flex items-center gap-3 py-2 border-t border-[#F4F4F5]">
+        <div className="flex items-center gap-3 py-2 border-t border-[#E9E3DB]">
           <div className="flex items-center gap-1.5">
             <span className="text-base">⭐</span>
             <div>
-              <p className="text-sm font-bold text-[#18181B] leading-none">{user.communityScore.total}</p>
-              <p className="text-[10px] text-[#A1A1AA]">points</p>
+              <p className="text-sm font-semibold text-[#2F2A26] leading-none">{user.communityScore.total}</p>
+              <p className="text-[10px] text-[#9B9690]">points</p>
             </div>
           </div>
           {user.streakCount > 0 && (
             <div className="flex items-center gap-1.5">
               <span className="text-base">🔥</span>
               <div>
-                <p className="text-sm font-bold text-[#18181B] leading-none">{user.streakCount}d</p>
-                <p className="text-[10px] text-[#A1A1AA]">streak</p>
+                <p className="text-sm font-semibold text-[#2F2A26] leading-none">{user.streakCount}d</p>
+                <p className="text-[10px] text-[#9B9690]">streak</p>
               </div>
             </div>
           )}
-          <div className="ml-auto text-[11px] text-[#A1A1AA]">
+          <div className="ml-auto text-[11px] text-[#9B9690]">
             {formatRelativeTime(user.lastActive)}
           </div>
         </div>
@@ -146,15 +146,15 @@ export default function ProfileCard({ user, onClose, compact = false }: ProfileC
         <div className="flex gap-2 pt-0.5">
           <Link
             href="/messages"
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-semibold transition-all bg-[#F4F4F5] text-[#3D3D3D] hover:bg-[#E4E4E7]"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-medium transition-all bg-[#E9E3DB] text-[#2F2A26] hover:bg-[#E9E3DB]"
           >
             <MessageCircle size={13} />
             Message
           </Link>
           <Link
             href={`/profile/${user.id}`}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-semibold transition-all text-white"
-            style={{ background: "linear-gradient(135deg, #E8734A, #F4A574)" }}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-medium transition-all text-white"
+            style={{ background: "linear-gradient(135deg, #F47A5C, #F4A574)" }}
           >
             <ExternalLink size={13} />
             View Profile

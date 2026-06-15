@@ -97,16 +97,16 @@ export default function MessagesPage() {
     <AppShell>
       <div className="h-screen flex overflow-hidden">
         {/* Sidebar */}
-        <div className="w-72 border-r border-[#E8E4DC] flex flex-col bg-white">
-          <div className="px-4 py-4 border-b border-[#E8E4DC]">
-            <h1 className="text-lg font-bold text-[#1A1A1A] mb-3">Messages</h1>
+        <div className="w-72 border-r border-[#E9E3DB] flex flex-col bg-white">
+          <div className="px-4 py-4 border-b border-[#E9E3DB]">
+            <h1 className="text-lg font-semibold text-[#2F2A26] mb-3">Messages</h1>
             <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#B0ABA3]" />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9B9690]" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search conversations…"
-                className="w-full pl-8 pr-3 py-2 bg-[#F5F0E8] rounded-xl text-xs placeholder-[#B0ABA3] focus:outline-none"
+                className="w-full pl-8 pr-3 py-2 bg-[#F2EDE4] rounded-xl text-xs placeholder-[#9B9690] focus:outline-none"
               />
             </div>
           </div>
@@ -123,7 +123,7 @@ export default function MessagesPage() {
                   onClick={() => setSelected(conv.id)}
                   className={cn(
                     "w-full flex items-start gap-3 px-4 py-3 text-left transition-colors",
-                    selected === conv.id ? "bg-[#FDF0EB]" : "hover:bg-[#F5F0E8]"
+                    selected === conv.id ? "bg-[#FEEEEA]" : "hover:bg-[#F2EDE4]"
                   )}
                 >
                   {user ? (
@@ -131,19 +131,19 @@ export default function MessagesPage() {
                       <CoveAvatar src={user.avatar} name={user.name} size={36} />
                     </div>
                   ) : (
-                    <div className="w-9 h-9 rounded-full bg-[#F0EDE6] flex items-center justify-center text-lg shrink-0">
+                    <div className="w-9 h-9 rounded-full bg-[#EDE7DF] flex items-center justify-center text-lg shrink-0">
                       {emoji}
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-[#1A1A1A] truncate">{name}</span>
-                      <span className="text-[10px] text-[#B0ABA3] shrink-0 ml-1">{formatRelativeTime(conv.timestamp)}</span>
+                      <span className="text-xs font-medium text-[#2F2A26] truncate">{name}</span>
+                      <span className="text-[10px] text-[#9B9690] shrink-0 ml-1">{formatRelativeTime(conv.timestamp)}</span>
                     </div>
-                    <p className="text-[11px] text-[#737373] truncate mt-0.5">{conv.lastMessage}</p>
+                    <p className="text-[11px] text-[#6E6A65] truncate mt-0.5">{conv.lastMessage}</p>
                   </div>
                   {conv.unread > 0 && (
-                    <span className="w-4 h-4 bg-[#E8734A] text-white text-[9px] font-bold rounded-full flex items-center justify-center shrink-0">
+                    <span className="w-4 h-4 bg-[#F47A5C] text-white text-[9px] font-semibold rounded-full flex items-center justify-center shrink-0">
                       {conv.unread}
                     </span>
                   )}
@@ -155,9 +155,9 @@ export default function MessagesPage() {
 
         {/* Chat area */}
         {selectedConv ? (
-          <div className="flex-1 flex flex-col bg-[#FAFAF7]">
+          <div className="flex-1 flex flex-col bg-[#F8F6F1]">
             {/* Header */}
-            <div className="px-5 py-3.5 border-b border-[#E8E4DC] bg-white flex items-center gap-3">
+            <div className="px-5 py-3.5 border-b border-[#E9E3DB] bg-white flex items-center gap-3">
               {selectedConv.type === "direct" ? (() => {
                 const u = getUser(selectedConv.userId);
                 return u ? (
@@ -166,19 +166,19 @@ export default function MessagesPage() {
                       <CoveAvatar src={u.avatar} name={u.name} size={32} />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-[#1A1A1A]">{u.name}</p>
-                      <p className="text-[10px] text-[#7B9E87]">● {u.availability}</p>
+                      <p className="text-sm font-medium text-[#2F2A26]">{u.name}</p>
+                      <p className="text-[10px] text-[#8BB8A8]">● {u.availability}</p>
                     </div>
                   </>
                 ) : null;
               })() : (
                 <>
-                  <div className="w-8 h-8 rounded-full bg-[#F0EDE6] flex items-center justify-center text-lg">
+                  <div className="w-8 h-8 rounded-full bg-[#EDE7DF] flex items-center justify-center text-lg">
                     {selectedConv.emoji}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-[#1A1A1A]">{selectedConv.name}</p>
-                    <p className="text-[10px] text-[#B0ABA3]">{selectedConv.type === "circle" ? "Circle chat" : "Event group"}</p>
+                    <p className="text-sm font-medium text-[#2F2A26]">{selectedConv.name}</p>
+                    <p className="text-[10px] text-[#9B9690]">{selectedConv.type === "circle" ? "Circle chat" : "Event group"}</p>
                   </div>
                 </>
               )}
@@ -201,13 +201,13 @@ export default function MessagesPage() {
                         className={cn(
                           "px-3.5 py-2.5 rounded-2xl text-sm",
                           isMe
-                            ? "bg-[#E8734A] text-white rounded-tr-sm"
-                            : "bg-white border border-[#E8E4DC] text-[#1A1A1A] rounded-tl-sm"
+                            ? "bg-[#F47A5C] text-white rounded-tr-sm"
+                            : "bg-white border border-[#E9E3DB] text-[#2F2A26] rounded-tl-sm"
                         )}
                       >
                         {msg.content}
                       </div>
-                      <span className="text-[10px] text-[#B0ABA3] mt-1">{formatRelativeTime(msg.timestamp)}</span>
+                      <span className="text-[10px] text-[#9B9690] mt-1">{formatRelativeTime(msg.timestamp)}</span>
                     </div>
                   </div>
                 );
@@ -215,18 +215,18 @@ export default function MessagesPage() {
             </div>
 
             {/* Input */}
-            <div className="px-5 py-3 border-t border-[#E8E4DC] bg-white">
+            <div className="px-5 py-3 border-t border-[#E9E3DB] bg-white">
               <div className="flex items-center gap-2">
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && sendMessage()}
                   placeholder="Type a message…"
-                  className="flex-1 px-4 py-2.5 bg-[#F5F0E8] rounded-xl text-sm placeholder-[#B0ABA3] focus:outline-none focus:ring-2 focus:ring-[#E8734A]/30"
+                  className="flex-1 px-4 py-2.5 bg-[#F2EDE4] rounded-xl text-sm placeholder-[#9B9690] focus:outline-none focus:ring-2 focus:ring-[#F47A5C]/30"
                 />
                 <button
                   onClick={sendMessage}
-                  className="w-9 h-9 bg-[#E8734A] rounded-xl flex items-center justify-center text-white hover:bg-[#D4623B] transition-colors shrink-0"
+                  className="w-9 h-9 bg-[#F47A5C] rounded-xl flex items-center justify-center text-white hover:bg-[#E0674A] transition-colors shrink-0"
                 >
                   <Send size={15} />
                 </button>
@@ -235,7 +235,7 @@ export default function MessagesPage() {
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center">
-            <p className="text-[#737373] text-sm">Select a conversation</p>
+            <p className="text-[#6E6A65] text-sm">Select a conversation</p>
           </div>
         )}
       </div>

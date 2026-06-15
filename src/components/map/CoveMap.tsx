@@ -233,7 +233,7 @@ export default function CoveMap({ users, filterFn }: Props) {
       <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30">
         <defs>
           <pattern id="map-grid" width="48" height="48" patternUnits="userSpaceOnUse">
-            <path d="M 48 0 L 0 0 0 48" fill="none" stroke="#4A7C6F" strokeWidth="0.5" />
+            <path d="M 48 0 L 0 0 0 48" fill="none" stroke="#3A9A87" strokeWidth="0.5" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#map-grid)" />
@@ -254,8 +254,8 @@ export default function CoveMap({ users, filterFn }: Props) {
       ].map(({ label, x, y }) => (
         <span
           key={label}
-          className="absolute text-[9px] font-bold uppercase tracking-widest pointer-events-none select-none opacity-40"
-          style={{ left: x, top: y, transform: "translate(-50%,-50%)", color: "#4A7C6F" }}
+          className="absolute text-[9px] font-semibold uppercase tracking-widest pointer-events-none select-none opacity-40"
+          style={{ left: x, top: y, transform: "translate(-50%,-50%)", color: "#3A9A87" }}
         >
           {label}
         </span>
@@ -295,8 +295,8 @@ export default function CoveMap({ users, filterFn }: Props) {
               height: 48,
               borderRadius: "50%",
               overflow: "hidden",
-              border: `2.5px solid ${isSelected ? "#E8734A" : "white"}`,
-              boxShadow: isSelected ? "0 0 0 2px #E8734A40" : "0 2px 8px rgba(0,0,0,0.18)",
+              border: `2.5px solid ${isSelected ? "#F47A5C" : "white"}`,
+              boxShadow: isSelected ? "0 0 0 2px #F47A5C40" : "0 2px 8px rgba(0,0,0,0.18)",
               flexShrink: 0,
             }}>
               <img
@@ -314,9 +314,9 @@ export default function CoveMap({ users, filterFn }: Props) {
                 fontSize: 9,
                 fontWeight: 700,
                 lineHeight: "1.2",
-                color: "#18181B",
-                background: isSelected ? "#FFF1EC" : "rgba(255,255,255,0.92)",
-                border: `1.5px solid ${isSelected ? "#E8734A" : "rgba(0,0,0,0.07)"}`,
+                color: "#2F2A26",
+                background: isSelected ? "#FFF0EE" : "rgba(255,255,255,0.92)",
+                border: `1.5px solid ${isSelected ? "#F47A5C" : "rgba(0,0,0,0.07)"}`,
                 borderRadius: 6,
                 padding: "2px 6px",
                 marginTop: 2,
@@ -366,21 +366,21 @@ export default function CoveMap({ users, filterFn }: Props) {
       <div className="absolute bottom-6 right-5 z-20 flex flex-col gap-1.5 pointer-events-auto">
         <button
           onClick={() => zoomBy(0.75)}
-          className="w-9 h-9 bg-white rounded-xl shadow-md flex items-center justify-center text-[#3D3D3D] hover:bg-[#FDF0EB] hover:text-[#E8734A] transition-colors border border-[#E8E4DC]"
+          className="w-9 h-9 bg-white rounded-xl shadow-md flex items-center justify-center text-[#2F2A26] hover:bg-[#FEEEEA] hover:text-[#F47A5C] transition-colors border border-[#E9E3DB]"
           aria-label="Zoom in"
         >
           <Plus size={16} />
         </button>
         <button
           onClick={() => zoomBy(-0.75)}
-          className="w-9 h-9 bg-white rounded-xl shadow-md flex items-center justify-center text-[#3D3D3D] hover:bg-[#FDF0EB] hover:text-[#E8734A] transition-colors border border-[#E8E4DC]"
+          className="w-9 h-9 bg-white rounded-xl shadow-md flex items-center justify-center text-[#2F2A26] hover:bg-[#FEEEEA] hover:text-[#F47A5C] transition-colors border border-[#E9E3DB]"
           aria-label="Zoom out"
         >
           <Minus size={16} />
         </button>
         <button
           onClick={resetView}
-          className="w-9 h-9 bg-white rounded-xl shadow-md flex items-center justify-center text-[#3D3D3D] hover:bg-[#FDF0EB] hover:text-[#E8734A] transition-colors border border-[#E8E4DC]"
+          className="w-9 h-9 bg-white rounded-xl shadow-md flex items-center justify-center text-[#2F2A26] hover:bg-[#FEEEEA] hover:text-[#F47A5C] transition-colors border border-[#E9E3DB]"
           aria-label="Reset view"
         >
           <Locate size={14} />
@@ -389,7 +389,7 @@ export default function CoveMap({ users, filterFn }: Props) {
 
       {/* Legend */}
       <div className="absolute bottom-6 left-4 z-20 flex items-center gap-2 pointer-events-none">
-        <div className="bg-white/90 backdrop-blur-sm rounded-xl px-3 py-2 text-xs text-[#737373] shadow-sm border border-white/60 flex items-center gap-1.5">
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl px-3 py-2 text-xs text-[#6E6A65] shadow-sm border border-white/60 flex items-center gap-1.5">
           <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#43D09F", display: "inline-block" }} />
           Open to Meet
         </div>

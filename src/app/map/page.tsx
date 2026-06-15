@@ -26,8 +26,8 @@ export default function MapPage() {
           <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide">
             <MapFilters />
           </div>
-          <div className="shrink-0 bg-white/90 backdrop-blur-sm rounded-full px-3 py-2 border border-[#E8E4DC] text-xs text-[#737373] shadow-sm whitespace-nowrap">
-            <span className="font-semibold text-[#1A1A1A]">{visibleCount}</span> nearby
+          <div className="shrink-0 bg-white/90 backdrop-blur-sm rounded-full px-3 py-2 border border-[#E9E3DB] text-xs text-[#6E6A65] shadow-sm whitespace-nowrap">
+            <span className="font-medium text-[#2F2A26]">{visibleCount}</span> nearby
           </div>
         </div>
 

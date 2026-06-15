@@ -24,18 +24,18 @@ export default function CirclesPage() {
     <AppShell>
       <div className="max-w-4xl mx-auto px-6 py-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-[#18181B]">Circles 🏡</h1>
-          <p className="text-[#71717A] text-sm mt-1">Communities for every interest, neighborhood, and vibe.</p>
+          <h1 className="text-2xl font-semibold text-[#2F2A26]">Circles 🏡</h1>
+          <p className="text-[#6E6A65] text-sm mt-1">Communities for every interest, neighborhood, and vibe.</p>
         </div>
 
         <div className="relative mb-4">
-          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A1A1AA]" />
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9B9690]" />
           <input
             type="text"
             placeholder="Search circles…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-white border border-[#E4E4E7] rounded-2xl text-sm placeholder-[#A1A1AA] focus:outline-none focus:ring-2 focus:ring-[#E8734A]/25 focus:border-[#E8734A] transition-all"
+            className="w-full pl-10 pr-4 py-3 bg-white border border-[#E9E3DB] rounded-2xl text-sm placeholder-[#9B9690] focus:outline-none focus:ring-2 focus:ring-[#F47A5C]/25 focus:border-[#F47A5C] transition-all"
           />
         </div>
 
@@ -45,12 +45,12 @@ export default function CirclesPage() {
               key={cat}
               onClick={() => setCategory(cat)}
               className={cn(
-                "shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all",
+                "shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium border transition-all",
                 category === cat
                   ? "text-white border-transparent shadow-sm"
-                  : "bg-white text-[#52525B] border-[#E4E4E7] hover:border-[#E8734A] hover:text-[#E8734A]"
+                  : "bg-white text-[#6E6A65] border-[#E9E3DB] hover:border-[#F47A5C] hover:text-[#F47A5C]"
               )}
-              style={category === cat ? { background: "linear-gradient(135deg, #E8734A, #F4A574)" } : {}}
+              style={category === cat ? { background: "linear-gradient(135deg, #F47A5C, #F4A574)" } : {}}
             >
               {cat}
             </button>
@@ -60,7 +60,7 @@ export default function CirclesPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {filtered.map((circle) => (
             <Link key={circle.id} href={`/circles/${circle.id}`}>
-              <div className="bg-white rounded-3xl border border-[#F0EDE6] overflow-hidden hover-lift cursor-pointer">
+              <div className="bg-white rounded-3xl border border-[#EDE7DF] overflow-hidden hover-lift cursor-pointer">
                 <div
                   className="h-28 bg-cover bg-center relative"
                   style={{ backgroundImage: `url(${circle.coverImage})` }}
@@ -74,14 +74,14 @@ export default function CirclesPage() {
                   </div>
                 </div>
                 <div className="p-4">
-                  <h3 className="font-bold text-[#18181B] text-sm">{circle.name}</h3>
-                  <p className="text-xs text-[#71717A] mt-1 line-clamp-2">{circle.description}</p>
-                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[#F4F4F5]">
-                    <div className="flex items-center gap-1 text-[#71717A]">
+                  <h3 className="font-semibold text-[#2F2A26] text-sm">{circle.name}</h3>
+                  <p className="text-xs text-[#6E6A65] mt-1 line-clamp-2">{circle.description}</p>
+                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[#E9E3DB]">
+                    <div className="flex items-center gap-1 text-[#6E6A65]">
                       <Users size={13} />
                       <span className="text-xs font-medium">{circle.memberCount.toLocaleString()}</span>
                     </div>
-                    <div className="flex items-center gap-1 text-[#71717A]">
+                    <div className="flex items-center gap-1 text-[#6E6A65]">
                       <MessageSquare size={13} />
                       <span className="text-xs font-medium">{circle.posts.length} posts</span>
                     </div>

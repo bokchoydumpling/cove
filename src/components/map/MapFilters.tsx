@@ -73,15 +73,15 @@ export default function MapFilters() {
             <button
               onClick={() => setOpenCategory(isOpen ? null : key)}
               className={cn(
-                "flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold border transition-all whitespace-nowrap shadow-sm",
+                "flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-medium border transition-all whitespace-nowrap shadow-sm",
                 isActive || isOpen
-                  ? "bg-[#E8734A] text-white border-[#E8734A]"
-                  : "bg-white/90 text-[#3D3D3D] border-[#E8E4DC] hover:border-[#E8734A] hover:text-[#E8734A] backdrop-blur-sm"
+                  ? "bg-[#F47A5C] text-white border-[#F47A5C]"
+                  : "bg-white/90 text-[#2F2A26] border-[#E9E3DB] hover:border-[#F47A5C] hover:text-[#F47A5C] backdrop-blur-sm"
               )}
             >
               {label}
               {isActive && (
-                <span className="bg-white/30 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
+                <span className="bg-white/30 text-white text-[9px] font-semibold rounded-full w-4 h-4 flex items-center justify-center leading-none">
                   {selected.length}
                 </span>
               )}
@@ -89,7 +89,7 @@ export default function MapFilters() {
             </button>
 
             {isOpen && (
-              <div className="absolute top-full left-0 mt-2 bg-white rounded-2xl border border-[#E8E4DC] shadow-xl z-50 p-3 min-w-[200px] max-w-[280px]">
+              <div className="absolute top-full left-0 mt-2 bg-white rounded-2xl border border-[#E9E3DB] shadow-xl z-50 p-3 min-w-[200px] max-w-[280px]">
                 <div className="flex flex-wrap gap-1.5">
                   {options.map((opt) => {
                     const on = selected.includes(opt);
@@ -100,8 +100,8 @@ export default function MapFilters() {
                         className={cn(
                           "flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all",
                           on
-                            ? "bg-[#E8734A] text-white border-[#E8734A]"
-                            : "bg-white text-[#4A4A4A] border-[#E8E4DC] hover:border-[#E8734A] hover:text-[#E8734A]"
+                            ? "bg-[#F47A5C] text-white border-[#F47A5C]"
+                            : "bg-white text-[#2F2A26] border-[#E9E3DB] hover:border-[#F47A5C] hover:text-[#F47A5C]"
                         )}
                       >
                         {on && <Check size={9} strokeWidth={3} />}
@@ -113,7 +113,7 @@ export default function MapFilters() {
                 {selected.length > 0 && (
                   <button
                     onClick={() => setMapFilter({ [key]: [] })}
-                    className="mt-2 text-[10px] text-[#E8734A] font-medium hover:underline"
+                    className="mt-2 text-[10px] text-[#F47A5C] font-medium hover:underline"
                   >
                     Clear {label.toLowerCase()}
                   </button>
@@ -127,7 +127,7 @@ export default function MapFilters() {
       {activeCount > 0 && (
         <button
           onClick={clearAll}
-          className="shrink-0 flex items-center gap-1 px-3 py-2 rounded-full text-xs font-medium text-[#737373] hover:text-[#E8734A] bg-white/80 backdrop-blur-sm border border-[#E8E4DC] transition-colors whitespace-nowrap shadow-sm"
+          className="shrink-0 flex items-center gap-1 px-3 py-2 rounded-full text-xs font-medium text-[#6E6A65] hover:text-[#F47A5C] bg-white/80 backdrop-blur-sm border border-[#E9E3DB] transition-colors whitespace-nowrap shadow-sm"
         >
           <X size={11} />
           Clear all

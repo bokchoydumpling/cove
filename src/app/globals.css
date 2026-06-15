@@ -19,13 +19,14 @@
   --color-ring: var(--ring);
   --color-destructive: var(--destructive);
 
-  --color-cove-amber: #E8734A;
-  --color-cove-sage: #7B9E87;
-  --color-cove-cream: #FAFAF7;
-  --color-cove-warm: #F5F0E8;
+  /* New design system tokens */
+  --color-cove-coral: #F47A5C;
+  --color-cove-sage: #8BB8A8;
+  --color-cove-cream: #F8F6F1;
+  --color-cove-warm: #F2EDE4;
   --color-cove-purple: #9B8EC4;
   --color-cove-sky: #6BAED6;
-  --color-cove-coral: #F4A574;
+  --color-cove-amber: #F4A574;
   --color-cove-mint: #A8D5BA;
 
   --radius-sm: calc(var(--radius) - 4px);
@@ -35,21 +36,21 @@
 }
 
 :root {
-  --background: #FAFAF7;
-  --foreground: #1A1A1A;
-  --card: #FFFFFF;
-  --card-foreground: #1A1A1A;
-  --primary: #E8734A;
+  --background: #F8F6F1;
+  --foreground: #2F2A26;
+  --card: #FFFDFC;
+  --card-foreground: #2F2A26;
+  --primary: #F47A5C;
   --primary-foreground: #FFFFFF;
-  --secondary: #F0EDE6;
-  --secondary-foreground: #3D3D3D;
-  --muted: #F0EDE6;
-  --muted-foreground: #737373;
-  --accent: #7B9E87;
+  --secondary: #F2EDE4;
+  --secondary-foreground: #2F2A26;
+  --muted: #F2EDE4;
+  --muted-foreground: #6E6A65;
+  --accent: #8BB8A8;
   --accent-foreground: #FFFFFF;
-  --border: #E8E4DC;
-  --input: #E8E4DC;
-  --ring: #E8734A;
+  --border: #E9E3DB;
+  --input: #E9E3DB;
+  --ring: #F47A5C;
   --destructive: #DC2626;
   --radius: 0.75rem;
 }
@@ -70,8 +71,9 @@ body {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-instrument-sans), var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
+  font-weight: 400;
 }
 
 /* Scrollbar styling */
@@ -83,11 +85,11 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #D4CFC6;
+  background: #CFC9C0;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #B8B2A7;
+  background: #B5AFA7;
 }
 
 /* Map container */
@@ -123,8 +125,8 @@ body {
 
 /* Streak glow */
 @keyframes streakGlow {
-  0%, 100% { box-shadow: 0 0 8px 2px rgba(232, 115, 74, 0.4); }
-  50%       { box-shadow: 0 0 16px 4px rgba(232, 115, 74, 0.7); }
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(244, 122, 92, 0.4); }
+  50%       { box-shadow: 0 0 16px 4px rgba(244, 122, 92, 0.7); }
 }
 .streak-glow {
   animation: streakGlow 2s ease-in-out infinite;
@@ -178,7 +180,7 @@ body {
   top: 8px !important;
   right: 8px !important;
   font-size: 18px !important;
-  color: #737373 !important;
+  color: #6E6A65 !important;
   background: rgba(255,255,255,0.8) !important;
   border-radius: 50% !important;
   width: 24px !important;
