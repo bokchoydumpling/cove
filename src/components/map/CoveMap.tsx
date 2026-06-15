@@ -34,6 +34,62 @@ const DEFAULT = { lng: -122.33, lat: 37.77, zoom: 11 };
 const ZOOM_MIN = 9;
 const ZOOM_MAX = 15;
 
+// ─── Community hotspot zones ──────────────────────────────────────────────────
+// Anchored to actual user coordinate clusters; latR/lngR are degree radii
+
+const HOTSPOTS = [
+  {
+    id: "ai-builders",
+    label: "AI Builders",
+    lat: 37.776,
+    lng: -122.404,
+    latR: 0.026,
+    lngR: 0.022,
+    color: "#8BB8A8",      // sage
+    labelColor: "#2A8070",
+  },
+  {
+    id: "creative-district",
+    label: "Creative District",
+    lat: 37.763,
+    lng: -122.416,
+    latR: 0.018,
+    lngR: 0.018,
+    color: "#B8A9D4",      // lavender
+    labelColor: "#6858A8",
+  },
+  {
+    id: "coffee-scene",
+    label: "Coffee Scene",
+    lat: 37.769,
+    lng: -122.432,
+    latR: 0.014,
+    lngR: 0.016,
+    color: "#F4A07A",      // warm coral
+    labelColor: "#B86030",
+  },
+  {
+    id: "oakland-creatives",
+    label: "Oakland Creatives",
+    lat: 37.821,
+    lng: -122.266,
+    latR: 0.024,
+    lngR: 0.020,
+    color: "#D4B54A",      // golden yellow
+    labelColor: "#886800",
+  },
+  {
+    id: "fitness-community",
+    label: "Fitness Community",
+    lat: 37.830,
+    lng: -122.250,
+    latR: 0.022,
+    lngR: 0.016,
+    color: "#7EB5D0",      // dusty blue
+    labelColor: "#2E70A0",
+  },
+] as const;
+
 // ─── Marker spread (push overlapping markers apart) ──────────────────────────
 
 interface MarkerPos {
@@ -113,14 +169,12 @@ export default function CoveMap({ users, filterFn }: Props) {
     if (!containerRef.current) return;
     const el: HTMLDivElement = containerRef.current;
 
-    // Pending start: set on pointerdown, cleared on up/cancel
     let pending: { x: number; y: number; lng: number; lat: number; zoom: number; pid: number } | null = null;
-    let dragging = false; // true only after confirmed motion
+    let dragging = false;
     let moved = false;
 
     function onDown(e: PointerEvent) {
       if (e.button !== 0) return;
-      // Don't preventDefault here — lets button clicks reach their handlers
       pending = {
         x: e.clientX, y: e.clientY,
         lng: viewRef.current.lng, lat: viewRef.current.lat,
@@ -134,7 +188,6 @@ export default function CoveMap({ users, filterFn }: Props) {
       const dx = e.clientX - pending.x;
       const dy = e.clientY - pending.y;
       if (!dragging && Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
-      // First confirmed move: capture pointer and enter drag mode
       if (!dragging) {
         el.setPointerCapture(e.pointerId);
         dragging = true;
@@ -151,7 +204,6 @@ export default function CoveMap({ users, filterFn }: Props) {
 
     function onUp() {
       if (moved) {
-        // Suppress the accidental click that fires right after releasing a drag
         el.addEventListener(
           "click",
           (ev) => { ev.stopPropagation(); },
@@ -226,42 +278,108 @@ export default function CoveMap({ users, filterFn }: Props) {
       style={{
         cursor: isDragging ? "grabbing" : "grab",
         touchAction: "none",
-        background: "linear-gradient(135deg, #EAF4F0 0%, #EEF2E8 40%, #F5EDDF 100%)",
+        background: "linear-gradient(160deg, #F2EAE0 0%, #EDE6DC 45%, #E6DED2 100%)",
       }}
     >
-      {/* Subtle background grid */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30">
+      {/* ── Hotspot blobs (CSS radial-gradient divs, re-projected each render) ── */}
+      {HOTSPOTS.map((h) => {
+        const c  = proj(h.lng, h.lat);
+        const ex = proj(h.lng + h.lngR, h.lat);
+        const ey = proj(h.lng, h.lat + h.latR);
+        const rx = Math.abs(ex.x - c.x);
+        const ry = Math.abs(c.y - ey.y);
+        return (
+          <div
+            key={h.id}
+            className="absolute pointer-events-none"
+            style={{
+              left: c.x - rx,
+              top: c.y - ry,
+              width: rx * 2,
+              height: ry * 2,
+              borderRadius: "50%",
+              background: `radial-gradient(ellipse at center, ${h.color}70 0%, ${h.color}30 48%, ${h.color}00 100%)`,
+              zIndex: 1,
+            }}
+          />
+        );
+      })}
+
+      {/* ── Dot grid (softer than lines) ─────────────────────────────────────── */}
+      <svg
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        style={{ zIndex: 2, opacity: 0.30 }}
+      >
         <defs>
-          <pattern id="map-grid" width="48" height="48" patternUnits="userSpaceOnUse">
-            <path d="M 48 0 L 0 0 0 48" fill="none" stroke="#3A9A87" strokeWidth="0.5" />
+          <pattern id="map-dots" width="32" height="32" patternUnits="userSpaceOnUse">
+            <circle cx="0" cy="0" r="1" fill="#BDB0A0" />
           </pattern>
         </defs>
-        <rect width="100%" height="100%" fill="url(#map-grid)" />
+        <rect width="100%" height="100%" fill="url(#map-dots)" />
       </svg>
 
-      {/* Neighbourhood labels (fixed, decorative) */}
+      {/* ── Neighbourhood geographic labels ──────────────────────────────────── */}
       {[
-        { label: "Mission", x: "19%", y: "65%" },
-        { label: "SoMa", x: "32%", y: "44%" },
-        { label: "Castro", x: "20%", y: "50%" },
+        { label: "Mission",      x: "19%", y: "65%" },
+        { label: "SoMa",         x: "32%", y: "44%" },
+        { label: "Castro",       x: "20%", y: "50%" },
         { label: "Hayes Valley", x: "26%", y: "38%" },
-        { label: "Marina", x: "14%", y: "17%" },
-        { label: "Temescal", x: "70%", y: "20%" },
-        { label: "Fruitvale", x: "77%", y: "61%" },
+        { label: "Marina",       x: "14%", y: "17%" },
+        { label: "Temescal",     x: "70%", y: "20%" },
+        { label: "Fruitvale",    x: "77%", y: "61%" },
         { label: "Lake Merritt", x: "65%", y: "38%" },
-        { label: "Rockridge", x: "73%", y: "10%" },
-        { label: "Excelsior", x: "18%", y: "82%" },
+        { label: "Rockridge",    x: "73%", y: "10%" },
+        { label: "Excelsior",    x: "18%", y: "82%" },
       ].map(({ label, x, y }) => (
         <span
           key={label}
-          className="absolute text-[9px] font-semibold uppercase tracking-widest pointer-events-none select-none opacity-40"
-          style={{ left: x, top: y, transform: "translate(-50%,-50%)", color: "#3A9A87" }}
+          className="absolute pointer-events-none select-none"
+          style={{
+            left: x, top: y,
+            transform: "translate(-50%,-50%)",
+            fontSize: 9,
+            fontWeight: 500,
+            textTransform: "uppercase",
+            letterSpacing: "0.10em",
+            color: "#A89880",
+            opacity: 0.55,
+            zIndex: 3,
+          }}
         >
           {label}
         </span>
       ))}
 
-      {/* User markers — adventurer portrait in circular frame */}
+      {/* ── Community identity labels (positioned via proj) ───────────────────── */}
+      {HOTSPOTS.map((h) => {
+        const c = proj(h.lng, h.lat);
+        if (c.x < -140 || c.x > size.w + 140 || c.y < -30 || c.y > size.h + 30) return null;
+        return (
+          <span
+            key={h.id}
+            className="absolute pointer-events-none select-none"
+            style={{
+              left: c.x,
+              top: c.y,
+              transform: "translate(-50%, -50%)",
+              fontSize: 9,
+              fontWeight: 600,
+              letterSpacing: "0.05em",
+              color: h.labelColor,
+              background: `${h.color}30`,
+              border: `1px solid ${h.color}55`,
+              borderRadius: 100,
+              padding: "2px 9px",
+              whiteSpace: "nowrap",
+              zIndex: 4,
+            }}
+          >
+            {h.label}
+          </span>
+        );
+      })}
+
+      {/* ── User markers ─────────────────────────────────────────────────────── */}
       {markerPositions.map(({ user, x, y, ox, oy }) => {
         const px = x + ox;
         const py = y + oy;
@@ -281,8 +399,8 @@ export default function CoveMap({ users, filterFn }: Props) {
               flexDirection: "column",
               alignItems: "center",
               filter: isSelected
-                ? "drop-shadow(0 0 8px rgba(232,115,74,0.7)) drop-shadow(0 2px 10px rgba(0,0,0,0.2))"
-                : "drop-shadow(0 2px 6px rgba(0,0,0,0.15))",
+                ? "drop-shadow(0 0 8px rgba(244,122,92,0.65)) drop-shadow(0 2px 10px rgba(0,0,0,0.18))"
+                : "drop-shadow(0 2px 8px rgba(0,0,0,0.12))",
             }}
             onClick={(e) => {
               e.stopPropagation();
@@ -295,8 +413,10 @@ export default function CoveMap({ users, filterFn }: Props) {
               height: 48,
               borderRadius: "50%",
               overflow: "hidden",
-              border: `2.5px solid ${isSelected ? "#F47A5C" : "white"}`,
-              boxShadow: isSelected ? "0 0 0 2px #F47A5C40" : "0 2px 8px rgba(0,0,0,0.18)",
+              border: `2.5px solid ${isSelected ? "#F47A5C" : "rgba(255,255,255,0.95)"}`,
+              boxShadow: isSelected
+                ? "0 0 0 2px rgba(244,122,92,0.30)"
+                : "0 2px 10px rgba(0,0,0,0.14)",
               flexShrink: 0,
             }}>
               <img
@@ -312,15 +432,15 @@ export default function CoveMap({ users, filterFn }: Props) {
             <div
               style={{
                 fontSize: 9,
-                fontWeight: 700,
+                fontWeight: 600,
                 lineHeight: "1.2",
                 color: "#2F2A26",
-                background: isSelected ? "#FFF0EE" : "rgba(255,255,255,0.92)",
-                border: `1.5px solid ${isSelected ? "#F47A5C" : "rgba(0,0,0,0.07)"}`,
-                borderRadius: 6,
+                background: isSelected ? "#FFF0EE" : "rgba(255,253,252,0.94)",
+                border: `1.5px solid ${isSelected ? "#F47A5C" : "rgba(0,0,0,0.06)"}`,
+                borderRadius: 8,
                 padding: "2px 6px",
                 marginTop: 2,
-                boxShadow: "0 1px 5px rgba(0,0,0,0.12)",
+                boxShadow: "0 1px 6px rgba(0,0,0,0.10)",
                 whiteSpace: "nowrap",
                 pointerEvents: "none",
                 display: "flex",
@@ -388,10 +508,24 @@ export default function CoveMap({ users, filterFn }: Props) {
       </div>
 
       {/* Legend */}
-      <div className="absolute bottom-6 left-4 z-20 flex items-center gap-2 pointer-events-none">
+      <div className="absolute bottom-6 left-4 z-20 flex flex-col gap-1.5 pointer-events-none">
         <div className="bg-white/90 backdrop-blur-sm rounded-xl px-3 py-2 text-xs text-[#6E6A65] shadow-sm border border-white/60 flex items-center gap-1.5">
           <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#43D09F", display: "inline-block" }} />
           Open to Meet
+        </div>
+        {/* Hotspot color key */}
+        <div className="bg-white/85 backdrop-blur-sm rounded-xl px-3 py-2 shadow-sm border border-white/60 flex flex-col gap-1">
+          {HOTSPOTS.map((h) => (
+            <div key={h.id} className="flex items-center gap-1.5">
+              <span style={{
+                width: 8, height: 8, borderRadius: "50%",
+                background: h.color, display: "inline-block", flexShrink: 0,
+              }} />
+              <span style={{ fontSize: 9, color: h.labelColor, fontWeight: 500, whiteSpace: "nowrap" }}>
+                {h.label}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
